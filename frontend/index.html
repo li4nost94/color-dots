@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лоппи Поппи — Финансовый дашборд</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#0f1117; --card:#181b24; --border:#2a2e3b; --text:#e4e6ec; --muted:#8b8fa3; --green:#4ade80; --red:#f87171; --blue:#60a5fa; --purple:#a78bfa; --amber:#fbbf24; --cyan:#22d3ee; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; padding:20px 16px; }
+  h1 { font-size:22px; font-weight:700; }
+  .header { margin-bottom:20px; }
+  .header p { color:var(--muted); font-size:12px; margin-top:4px; }
+  .badge { font-size:12px; color:var(--muted); background:var(--card); padding:3px 10px; border-radius:14px; border:1px solid var(--border); margin-left:8px; }
+  .controls { display:flex; gap:8px; margin-bottom:18px; align-items:center; flex-wrap:wrap; }
+  .controls select { background:var(--card); color:var(--text); border:1px solid var(--border); padding:6px 12px; border-radius:8px; font-size:13px; }
+  .tabs { display:flex; gap:2px; background:var(--card); padding:3px; border-radius:10px; border:1px solid var(--border); overflow-x:auto; width:fit-content; max-width:100%; }
+  .tab-btn { padding:6px 12px; border-radius:7px; border:none; cursor:pointer; font-size:11px; font-weight:600; background:transparent; color:var(--muted); white-space:nowrap; font-family:inherit; transition:background .2s ease,color .2s ease,transform .15s ease; }
+  .tab-btn.active { background:var(--green); color:var(--bg); }
+  .tab-btn:not(.active):hover { background:rgba(74,222,128,0.1); color:var(--text); }
+  .tab-btn:not(.active):active { transform:scale(0.97); }
+  .grid { display:grid; gap:10px; margin-bottom:14px; }
+  .grid-4 { grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); }
+  .grid-2 { grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+  .card { background:var(--card); border-radius:14px; border:1px solid var(--border); padding:18px 20px; }
+  .card h3 { margin:0 0 14px; font-size:13px; font-weight:600; color:var(--muted); letter-spacing:0.03em; text-transform:uppercase; }
+  .metric { background:var(--card); border-radius:14px; border:1px solid var(--border); padding:16px 18px; }
+  .metric .label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600; }
+  .metric .value { font-size:24px; font-weight:700; font-family:'Consolas',monospace; margin-top:2px; }
+  .metric .sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { padding:7px 5px; text-align:left; color:var(--muted); font-weight:600; font-size:10px; text-transform:uppercase; border-bottom:2px solid var(--border); }
+  td { padding:6px 5px; border-bottom:1px solid var(--border); }
+  .mono { font-family:'Consolas',monospace; }
+  .right { text-align:right; }
+  .loading { text-align:center; padding:40px; color:var(--muted); font-size:14px; }
+  .chart-wrap { position:relative; height:260px; margin-bottom:10px; }
+  .chart-wrap-sm { height:200px; }
+  .pnl-section { background:rgba(42,46,59,0.3); padding:10px 12px; font-weight:700; font-size:13px; border-bottom:2px solid var(--border); margin-top:8px; }
+  .pnl-row { display:flex; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); font-size:12px; }
+  .pnl-row.sub { padding-left:24px; }
+  .pnl-row.total { font-weight:700; background:rgba(42,46,59,0.3); font-size:13px; }
+  .pnl-row.grand { font-weight:700; font-size:15px; padding:12px; border-bottom:2px solid var(--border); }
+  .pnl-vals { display:flex; gap:16px; }
+  .pnl-vals .byn { font-family:'Consolas',monospace; font-size:11px; color:var(--muted); min-width:85px; text-align:right; }
+  .pnl-vals .usd { font-family:'Consolas',monospace; font-weight:600; min-width:75px; text-align:right; }
+  .pl-wrap { overflow-x:auto; margin-top:10px; }
+  .pl-card h2 { font-size:15px; font-weight:700; margin:0 0 6px; text-transform:capitalize; }
+  .pl-card .pl-note { font-size:11px; color:var(--muted); margin-bottom:14px; line-height:1.45; }
+  .pl-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .pl-table th { text-align:right; padding:8px 10px; color:var(--muted); font-weight:600; font-size:10px; text-transform:uppercase; border-bottom:2px solid var(--border); }
+  .pl-table th.pl-c-name { text-align:left; }
+  .pl-table td { padding:6px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .pl-table td.pl-c-a { color:var(--muted); font-size:11px; width:110px; }
+  .pl-table td.pl-c-b { }
+  .pl-table td.pl-num { font-family:'Consolas',monospace; text-align:right; white-space:nowrap; }
+  .pl-table tr.pl-sec td { padding-top:14px; font-weight:700; font-size:12px; color:var(--amber); border-bottom:none; }
+  .pl-table tr.pl-subtotal td { font-weight:700; color:var(--blue); border-bottom:2px solid var(--border); }
+  .pl-table tr.pl-sumhead td { background:rgba(42,46,59,0.55); font-weight:700; padding:10px; border-bottom:1px solid var(--border); }
+  .pl-table tr.pl-total-exp td { font-weight:700; font-size:13px; color:var(--red); padding:12px 10px; }
+  .pl-table tr.pl-total-inc td { font-weight:700; font-size:13px; color:var(--green); padding:10px; }
+  .pl-table tr.pl-foot td { font-size:11px; color:var(--muted); }
+  .pl-emp-cell { padding:0 !important; border:none !important; vertical-align:top; }
+  /* Две строки <tr>: кликабельная шапка + скрытая детализация (без кнопок/div-аккордеона внутри одной ячейки) */
+  .pl-emp-head-row { cursor:pointer; user-select:none; outline:none; }
+  .pl-emp-head-row td { transition:background .2s ease, box-shadow .2s ease; background:rgba(26,29,38,0.95); border-bottom:1px solid rgba(74,222,128,0.14); }
+  .pl-emp-head-row td:first-child { border-left:4px solid var(--amber); padding-left:12px !important; }
+  .pl-emp-head-row:hover td { background:rgba(48,54,72,0.98); box-shadow:inset 0 0 0 1px rgba(251,191,36,0.35); }
+  .pl-emp-head-row.pl-open td { background:rgba(34,42,52,0.98); box-shadow:inset 0 0 0 1px rgba(74,222,128,0.35); }
+  .pl-emp-head-row:focus-visible td:first-child { box-shadow:inset 0 0 0 2px rgba(74,222,128,0.65); }
+  .pl-emp-head-name { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+  .pl-emp-name { font-weight:600; font-size:13px; letter-spacing:-0.01em; }
+  .pl-emp-badge { flex-shrink:0; font-size:10px; font-weight:700; color:#fff; background:linear-gradient(135deg,#c2410c,#ea580c); padding:3px 10px; border-radius:999px; letter-spacing:0.02em; box-shadow:0 1px 6px rgba(234,88,12,0.35); }
+  .pl-emp-head-stoim { font-size:11px; color:var(--muted); font-weight:500; vertical-align:middle; line-height:1.35; }
+  .pl-emp-head-stoim .pl-stoim-lab { display:block; font-size:9px; text-transform:lowercase; letter-spacing:0.04em; margin-bottom:2px; opacity:0.9; }
+  .pl-emp-head-stoim .num { display:block; font-size:13px; font-weight:600; color:var(--amber); }
+  .pl-emp-byn-main { font-size:15px; font-weight:700; color:var(--text); }
+  .pl-emp-byn-sub { font-size:10px; color:var(--muted); font-weight:500; margin-top:3px; }
+  .pl-emp-usd-stack { line-height:1.35; }
+  .pl-emp-usd-stack .pl-emp-byn-sub { margin-top:4px; }
+  .pl-dec-test-banner { margin-bottom:14px; padding:12px 14px; border-radius:12px; border:1px solid rgba(74,222,128,0.4); background:rgba(74,222,128,0.1); font-size:12px; line-height:1.5; color:var(--text); }
+  .pl-dec-test-banner strong { color:var(--amber); }
+  .pl-byn-only-dash { color:var(--muted); font-size:13px; }
+  .pl-th-muted { font-weight:500; color:var(--muted); text-transform:none; letter-spacing:0; font-size:9px; }
+  .pl-table-byn-only .pl-byn-cell { font-weight:700; color:var(--green); }
+  .pl-chev { display:inline-block; width:1.1em; color:var(--muted); font-size:11px; transition:transform .25s ease,color .2s ease; margin-right:2px; }
+  .pl-emp-head-row.pl-open .pl-chev { transform:rotate(90deg); color:var(--green); }
+  .pl-emp-detail-row td { border-bottom:1px solid var(--border) !important; }
+  .pl-emp-detail-inner { margin:4px 0 8px; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:rgba(24,27,36,0.6); }
+  .pl-emp-b { padding:10px 12px 12px; background:rgba(15,17,23,0.55); }
+  .pl-emp-b .pl-table { font-size:12px; }
+  .pl-emp-b .pl-exp-line td { padding:6px 8px !important; border-bottom:1px solid rgba(42,46,59,0.6) !important; }
+  .pl-emp-b .pl-exp-line:last-child td { border-bottom:none !important; }
+  .pl-emp-b .pl-exp-line.pl-sub .pl-c-b { padding-left:18px !important; color:var(--muted); font-size:12px; }
+  .pl-emp-b .pl-hint { font-size:10px; color:var(--muted); display:block; margin-top:3px; font-weight:500; }
+  .pl-exp-mid-cell { text-align:right; vertical-align:middle; padding-right:6px !important; width:72px; }
+  .pl-exp-mid-tag { font-size:10px; color:var(--muted); font-weight:500; white-space:nowrap; }
+  .pl-emp-b .pl-exp-line.pl-emp-cc-line td { border-top:1px solid rgba(42,46,59,0.85); padding-top:10px !important; }
+  .pl-emp-b .pl-exp-line.pl-emp-cc-line .pl-num { color:var(--amber); font-weight:700; font-size:14px; }
+  .pl-emp-b .pl-num.pl-neg { color:var(--red); font-weight:600; }
+  .pl-emp-b .pl-num.pl-pos { color:var(--green); font-weight:600; }
+  .pl-emp-b .pl-exp-line.pl-net .pl-num { font-weight:700; font-size:13px; color:var(--green); }
+  .pl-emp-foot { font-size:10px; color:var(--muted); margin-top:10px; line-height:1.45; }
+  .footer { margin-top:20px; padding:10px 0; border-top:1px solid var(--border); font-size:10px; color:var(--muted); text-align:center; }
+  #content { min-height:400px; }
+  .num { font-variant-numeric:tabular-nums; font-family:'Consolas','SF Mono',ui-monospace,monospace; letter-spacing:-0.02em; }
+  .salary-page {
+    --sal-accent:rgba(74,222,128,0.14);
+    --sal-line:rgba(42,46,59,0.9);
+    --sal-c-salary:#10b981;
+    --sal-c-advance:#3b82f6;
+    --sal-c-other:#8b5cf6;
+    --sal-c-premiya:#f59e0b;
+  }
+  .salary-note { font-size:11px; color:var(--muted); line-height:1.5; margin:-4px 0 16px; max-width:920px; padding:12px 14px; background:rgba(24,27,36,0.65); border-radius:10px; border:1px solid var(--border); }
+  .salary-page .metric { transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease; }
+  .salary-page .metric:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.35); border-color:rgba(74,222,128,0.25); }
+  .salary-page .metric .value { transition:color .2s ease; }
+  .salary-page .metric:hover .value { filter:brightness(1.08); }
+  .salary-card-list { position:relative; }
+  .salary-card-list::before { content:''; position:absolute; inset:0; border-radius:14px; pointer-events:none; opacity:0; transition:opacity .25s ease; box-shadow:inset 0 0 0 1px rgba(74,222,128,0.2); }
+  .salary-card-list:hover::before { opacity:1; }
+  .salary-emp { border:1px solid var(--border); border-radius:12px; margin-bottom:8px; overflow:hidden; background:linear-gradient(165deg,rgba(30,33,44,0.95) 0%,rgba(24,27,36,0.98) 100%); transition:border-color .22s ease,box-shadow .22s ease; }
+  .salary-emp:hover { border-color:rgba(139,143,163,0.45); box-shadow:0 4px 20px rgba(0,0,0,0.25); }
+  .salary-emp[open] { border-color:rgba(74,222,128,0.35); box-shadow:0 0 0 1px rgba(74,222,128,0.12),0 8px 28px rgba(0,0,0,0.3); }
+  .salary-emp summary { cursor:pointer; list-style:none; display:flex; flex-wrap:wrap; align-items:center; gap:12px; row-gap:10px; padding:14px 16px; font-weight:600; font-size:13px; user-select:none; transition:background .22s ease; }
+  .salary-emp summary:focus-visible { outline:2px solid rgba(74,222,128,0.7); outline-offset:2px; border-radius:8px; }
+  .salary-emp summary::-webkit-details-marker { display:none; }
+  .salary-emp summary:hover { background:var(--sal-accent); }
+  .salary-emp[open] summary { background:rgba(74,222,128,0.08); border-bottom:1px solid var(--sal-line); }
+  .sal-chev { flex-shrink:0; width:22px; height:22px; border-radius:6px; display:grid; place-items:center; background:rgba(42,46,59,0.6); border:1px solid var(--border); transition:transform .3s cubic-bezier(0.4,0,0.2,1),background .2s ease,border-color .2s ease; }
+  .salary-emp summary:hover .sal-chev { border-color:rgba(96,165,250,0.45); background:rgba(96,165,250,0.1); }
+  .sal-chev svg { width:10px; height:10px; color:var(--muted); transition:color .2s ease; }
+  .sal-chev svg path { stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .salary-emp summary:hover .sal-chev svg { color:var(--blue); }
+  .salary-emp[open] .sal-chev { transform:rotate(90deg); background:rgba(74,222,128,0.12); border-color:rgba(74,222,128,0.35); }
+  .salary-emp[open] .sal-chev svg { stroke:var(--green); }
+  .sal-name-wrap { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; flex:1; }
+  .sal-name { font-weight:600; font-size:14px; letter-spacing:-0.01em; }
+  .sal-tag { font-size:10px; font-weight:700; color:var(--bg); background:linear-gradient(135deg,#fbbf24,var(--sal-c-premiya)); padding:3px 9px; border-radius:8px; letter-spacing:0.02em; box-shadow:0 2px 6px rgba(245,158,11,0.3); }
+  .sal-head-nums { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:flex-end; gap:18px 22px; margin-left:auto; text-align:right; }
+  .sal-hn-block { display:flex; flex-direction:column; gap:2px; align-items:flex-end; }
+  .sal-hn-lab { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); }
+  .sal-hn-val { font-size:15px; font-weight:700; }
+  .sal-hn-val.num { font-size:16px; }
+  .sal-hn-val.cost { color:var(--amber); }
+  .sal-hn-val.gross { color:var(--text); }
+  .sal-panel { display:grid; grid-template-rows:0fr; transition:grid-template-rows .38s cubic-bezier(0.4,0,0.2,1); }
+  .salary-emp[open] .sal-panel { grid-template-rows:1fr; }
+  .sal-panel-inner { overflow:hidden; min-height:0; }
+  .salary-break { padding:16px 18px 18px; background:rgba(15,17,23,0.35); }
+  .sal-sec { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin:14px 0 8px; padding-bottom:4px; border-bottom:1px solid var(--sal-line); }
+  .sal-sec:first-child { margin-top:0; }
+  .sal-sec-muted { color:var(--muted); }
+  .sal-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:8px 4px; font-size:13px; border-radius:8px; margin:0 -4px; transition:background .18s ease; }
+  .sal-row:hover { background:rgba(42,46,59,0.35); }
+  .sal-row .sal-lab-main { color:var(--text); font-weight:500; }
+  .sal-row .sal-lab-sub { display:block; font-size:10px; color:var(--muted); font-weight:500; margin-top:3px; text-transform:none; letter-spacing:0; }
+  .sal-row .num { font-size:14px; font-weight:600; white-space:nowrap; }
+  .sal-row.sub { padding-left:18px; margin-top:-2px; margin-bottom:2px; border-left:3px solid rgba(96,165,250,0.55); padding-top:4px; padding-bottom:6px; border-radius:0 8px 8px 0; }
+  .sal-row.sub .sal-lab-main { color:var(--muted); font-size:12px; font-weight:500; }
+  .sal-row.sub .num { font-size:13px; font-weight:600; color:var(--blue); }
+  .sal-row.deduct .num { color:var(--red); font-weight:700; }
+  .sal-row.employer .num { color:var(--green); font-weight:700; }
+  .sal-row.vedom { font-size:12px; color:var(--muted); }
+  .sal-row.vedom .sal-lab-main { font-weight:500; }
+  .sal-row.vedom .num { font-weight:600; }
+  .sal-row.vedom.sal-payout-salary .num { color:#6ee7b7; }
+  .sal-row.vedom.sal-payout-advance .num { color:#93c5fd; }
+  .sal-row.vedom.sal-payout-other .num { color:#c4b5fd; }
+  .sal-row.sal-grand { margin-top:10px; padding-top:12px; border-top:1px solid var(--sal-line); font-weight:700; }
+  .sal-row.sal-grand .sal-lab-main { font-size:14px; }
+  .sal-row.sal-grand .num { font-size:17px; }
+  .sal-row.net .num { color:var(--green); }
+  .sal-row.sal-cost .num { color:var(--amber); font-size:18px; }
+  .sal-formula { font-size:10px; color:var(--muted); text-align:right; margin-top:4px; padding-right:4px; font-style:italic; }
+  .sal-chart-card { transition:box-shadow .22s ease; }
+  .sal-chart-card:hover { box-shadow:0 6px 22px rgba(0,0,0,0.28); }
+  .sal-viz-card h3 { margin-bottom:4px; }
+  .sal-viz-head { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:12px 16px; margin-bottom:12px; }
+  .sal-viz-sub { font-size:11px; color:var(--muted); line-height:1.45; margin:0; max-width:520px; }
+  .sal-viz-toggle { display:inline-flex; flex-wrap:wrap; padding:3px; border-radius:10px; background:rgba(15,17,23,0.65); border:1px solid var(--border); flex-shrink:0; gap:2px; }
+  .sal-viz-btn { border:none; cursor:pointer; font-family:inherit; font-size:11px; font-weight:600; padding:7px 12px; border-radius:8px; color:var(--muted); background:transparent; transition:background .2s ease,color .2s ease; }
+  .sal-usd-note { font-size:11px; color:var(--muted); line-height:1.5; margin:12px 0 0; padding:10px 12px; border-radius:10px; background:rgba(24,27,36,0.65); border:1px solid var(--border); }
+  .sal-viz-btn:hover { color:var(--text); background:rgba(42,46,59,0.5); }
+  .sal-viz-btn.active { background:rgba(74,222,128,0.2); color:var(--green); box-shadow:inset 0 0 0 1px rgba(74,222,128,0.35); }
+  .sal-viz-legend { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin-bottom:10px; padding:10px 12px; border-radius:10px; background:rgba(15,17,23,0.45); border:1px solid rgba(42,46,59,0.9); font-size:12px; }
+  .sal-leg { display:inline-flex; align-items:center; gap:7px; color:var(--text); font-weight:500; }
+  .sal-sw { width:12px; height:12px; border-radius:3px; flex-shrink:0; box-shadow:0 0 0 1px rgba(0,0,0,0.25); }
+  .sal-sw-salary { background:var(--sal-c-salary); }
+  .sal-sw-advance { background:var(--sal-c-advance); }
+  .sal-sw-other { background:var(--sal-c-other); }
+  .sal-leg-note { flex:1 1 220px; font-size:10px; color:var(--muted); line-height:1.4; min-width:180px; }
+  .sal-prochee-hint { font-size:11px; color:var(--muted); line-height:1.5; margin:0 0 12px; padding:10px 12px; border-radius:10px; border-left:3px solid var(--sal-c-other); background:rgba(139,92,246,0.08); }
+  .sal-prochee-hint strong { color:#ddd6fe; font-weight:600; }
+  .sal-viz-panel { margin-top:2px; }
+  .sal-viz-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .sal-viz-cap { caption-side:top; text-align:left; font-size:11px; color:var(--muted); line-height:1.45; padding:0 0 10px; max-width:720px; }
+  .sal-viz-table th { text-align:left; padding:8px 10px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; border-bottom:2px solid var(--border); }
+  .sal-viz-table th.right, .sal-viz-table td.right { text-align:right; }
+  .sal-viz-table th.sal-th-salary { color:#a7f3d0; background:rgba(16,185,129,0.14); border-bottom-color:rgba(16,185,129,0.35); }
+  .sal-viz-table th.sal-th-advance { color:#bfdbfe; background:rgba(59,130,246,0.16); border-bottom-color:rgba(59,130,246,0.35); }
+  .sal-viz-table th.sal-th-other { color:#ddd6fe; background:rgba(139,92,246,0.16); border-bottom-color:rgba(139,92,246,0.35); }
+  .sal-viz-table th.sal-th-total { color:var(--text); background:rgba(42,46,59,0.5); }
+  .sal-viz-table td { padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .sal-viz-table tbody tr:nth-child(even) { background:rgba(24,27,36,0.35); }
+  .sal-viz-table tbody tr:hover { background:rgba(42,46,59,0.45); }
+  .sal-viz-table .num { font-variant-numeric:tabular-nums; }
+  .sal-viz-table .c-sal { color:#6ee7b7; font-weight:600; }
+  .sal-viz-table .c-adv { color:#93c5fd; font-weight:600; }
+  .sal-viz-table .c-oth { color:#c4b5fd; font-weight:600; }
+  .sal-viz-table .c-tot { color:#86efac; font-weight:700; }
+  .sal-vedom-table tbody tr { transition:background .15s ease; }
+  .sal-vedom-table tbody tr:hover { background:rgba(42,46,59,0.4); }
+  .sal-vedom-table thead th.sal-th-salary { color:#a7f3d0; background:rgba(16,185,129,0.12); }
+  .sal-vedom-table thead th.sal-th-advance { color:#bfdbfe; background:rgba(59,130,246,0.14); }
+  .sal-vedom-table thead th.sal-th-other { color:#ddd6fe; background:rgba(139,92,246,0.14); }
+  .sal-vedom-table .c-sal { color:#6ee7b7; }
+  .sal-vedom-table .c-adv { color:#93c5fd; }
+  .sal-vedom-table .c-oth { color:#c4b5fd; }
+  .sal-vedom-table .c-tot { color:#86efac; font-weight:700; }
+  /* Авансовые отчёты (1С) */
+  .adv-card { border:1px solid var(--border); border-radius:14px; border-left:4px solid #22d3ee; background:linear-gradient(165deg,rgba(34,211,238,0.08) 0%,rgba(24,27,36,0.98) 42%); padding:16px 18px 18px; margin-bottom:14px; }
+  .adv-card-compact { padding:12px 14px 14px; margin-top:14px; margin-bottom:0; }
+  .adv-card h3 { margin:0 0 6px; font-size:13px; font-weight:700; letter-spacing:0.02em; color:#a5f3fc; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .adv-badge { font-size:10px; font-weight:700; color:var(--bg); background:linear-gradient(135deg,#22d3ee,#0891b2); padding:3px 10px; border-radius:999px; letter-spacing:0.04em; }
+  .adv-lead { font-size:11px; color:var(--muted); line-height:1.5; margin:0 0 12px; max-width:820px; }
+  .adv-kpi { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; padding:10px 12px; border-radius:10px; background:rgba(15,17,23,0.55); border:1px solid rgba(34,211,238,0.25); }
+  .adv-kpi .adv-kpi-lab { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); }
+  .adv-kpi .adv-kpi-val { font-size:18px; font-weight:700; font-family:'Consolas','SF Mono',ui-monospace,monospace; color:#67e8f9; }
+  .adv-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .adv-table th { text-align:left; padding:8px 10px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); border-bottom:2px solid rgba(34,211,238,0.35); }
+  .adv-table th.adv-th-amt { text-align:right; }
+  .adv-table td { padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .adv-table tbody tr:nth-child(even) { background:rgba(24,27,36,0.35); }
+  .adv-table tbody tr:hover { background:rgba(34,211,238,0.06); }
+  .adv-table .mono { color:#e0f2fe; }
+  .adv-table .adv-amt { text-align:right; font-weight:600; color:#67e8f9; font-variant-numeric:tabular-nums; font-family:'Consolas','SF Mono',ui-monospace,monospace; }
+  .adv-empty { font-size:12px; color:var(--muted); margin:0 0 8px; padding:10px 0; }
+  .adv-foot { font-size:10px; color:var(--muted); line-height:1.45; margin:12px 0 0; padding-top:10px; border-top:1px solid var(--border); }
+  .sal-payout-salary { border-left:3px solid var(--sal-c-salary) !important; padding-left:12px !important; }
+  .sal-payout-advance { border-left:3px solid var(--sal-c-advance) !important; padding-left:12px !important; }
+  .sal-payout-other { border-left:3px solid var(--sal-c-other) !important; padding-left:12px !important; }
+  .sal-row.prem-accr .num { color:#fcd34d; font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:baseline;flex-wrap:wrap">
+    <h1>Лоппи Поппи ООО</h1>
+    <span class="badge" id="periodBadge">загрузка...</span>
+  </div>
+  <p>Финансовый дашборд · Данные из 1С:Бухгалтерия</p>
+</div>
+
+<div class="controls">
+  <select id="periodSelect" onchange="loadPeriod()"></select>
+  <div class="tabs" id="tabsContainer"></div>
+</div>
+
+<div id="content"><div class="loading">Загрузка данных...</div></div>
+
+<div class="footer">Лоппи Поппи Finance · Данные хранятся локально в SQLite</div>
+
+<script>
+/** База URL для API; подставляется в init() (ищем рабочий scripts/server.py). ?api=http://127.0.0.1:8765 — вручную */
+let API = '';
+let currentPeriod = '';
+let currentTab = 'overview';
+let chartInstances = {};
+
+const TABS = [
+  ['overview','Обзор'], ['pnl','P&L'], ['pnl_table','P&L (таблица)'], ['pnl_dec_list','Список P&L декабрь'],
+  ['salary','Зарплаты'], ['staff','Кадры'], ['assets','ОС'], ['currency','Валюты']
+];
+
+const MONTH_RU_FULL = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+function periodTitleRu(p) {
+  if (!p || !p.includes('-')) return p;
+  const [y, m] = p.split('-');
+  const w = MONTH_RU_FULL[(parseInt(m, 10) || 1) - 1] || m;
+  return w.charAt(0).toUpperCase() + w.slice(1) + ' ' + y;
+}
+
+const fmtN = (v) => Number(v).toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtK = (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'K' : Math.round(v);
+
+/** Цвета ведомости (зарплата / аванс / прочее) — совпадают с легендой и таблицей вкладки «Зарплаты». */
+const SAL_VIZ_COLORS = { salary: '#10b981', advance: '#3b82f6', other: '#8b5cf6' };
+
+function salChartOptions(d) {
+  return {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        stacked: true,
+        ticks: { color: '#8b8fa3', callback: fmtK },
+        grid: { color: 'rgba(42,46,59,0.6)' },
+      },
+      y: {
+        stacked: true,
+        ticks: { color: '#8b8fa3', font: { size: 10 } },
+        grid: { display: false },
+      },
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: { color: '#8b8fa3', boxWidth: 12, padding: 14 },
+      },
+      tooltip: {
+        callbacks: {
+          title: (items) => {
+            const i = items[0]?.dataIndex;
+            return (i != null && d.payouts[i]) ? String(d.payouts[i].employee_name) : '';
+          },
+          label: (ctx) => ` ${ctx.dataset.label}: ${fmtN(ctx.raw)} BYN`,
+        },
+      },
+    },
+  };
+}
+
+function buildSalaryChart(d) {
+  return new Chart(document.getElementById('salChart'), {
+    type: 'bar',
+    data: {
+      labels: d.payouts.map((r) => String(r.employee_name).split(' ').slice(0, 2).join(' ')),
+      datasets: [
+        { label: 'Зарплата', data: d.payouts.map((r) => r.salary), backgroundColor: SAL_VIZ_COLORS.salary },
+        { label: 'Аванс', data: d.payouts.map((r) => r.advance), backgroundColor: SAL_VIZ_COLORS.advance },
+        { label: 'Прочее', data: d.payouts.map((r) => r.other), backgroundColor: SAL_VIZ_COLORS.other },
+      ],
+    },
+    options: salChartOptions(d),
+  });
+}
+
+function wireSalaryViz(el, d, chartHeightPx) {
+  const root = el.querySelector('.sal-viz-card');
+  if (!root || !d.payouts.length) return;
+  const chartBox = root.querySelector('#sal-chart-box');
+  const tableBox = root.querySelector('#sal-table-viz');
+  const usdBox = root.querySelector('#sal-table-viz-usd');
+  const btnChart = root.querySelector('[data-sal-viz="chart"]');
+  const btnTable = root.querySelector('[data-sal-viz="table"]');
+  const btnUsd = root.querySelector('[data-sal-viz="usd"]');
+  if (!chartBox || !tableBox || !usdBox || !btnChart || !btnTable || !btnUsd) return;
+
+  function setMode(mode) {
+    const isChart = mode === 'chart';
+    const isTable = mode === 'table';
+    const isUsd = mode === 'usd';
+    sessionStorage.setItem('salVizMode', isChart ? 'chart' : isTable ? 'table' : 'usd');
+    btnChart.classList.toggle('active', isChart);
+    btnTable.classList.toggle('active', isTable);
+    btnUsd.classList.toggle('active', isUsd);
+    btnChart.setAttribute('aria-selected', isChart ? 'true' : 'false');
+    btnTable.setAttribute('aria-selected', isTable ? 'true' : 'false');
+    btnUsd.setAttribute('aria-selected', isUsd ? 'true' : 'false');
+    chartBox.hidden = !isChart;
+    tableBox.hidden = !isTable;
+    usdBox.hidden = !isUsd;
+    if (isChart) {
+      if (!chartInstances.sal) chartInstances.sal = buildSalaryChart(d);
+      requestAnimationFrame(() => {
+        try {
+          chartInstances.sal.resize();
+        } catch (e) { /* noop */ }
+      });
+    } else if (chartInstances.sal) {
+      chartInstances.sal.destroy();
+      delete chartInstances.sal;
+    }
+  }
+  btnChart.addEventListener('click', () => setMode('chart'));
+  btnTable.addEventListener('click', () => setMode('table'));
+  btnUsd.addEventListener('click', () => setMode('usd'));
+  const v = sessionStorage.getItem('salVizMode');
+  const initial = v === 'table' ? 'table' : v === 'usd' ? 'usd' : 'chart';
+  setMode(initial);
+  const cw = chartBox.querySelector('.chart-wrap');
+  if (cw && chartHeightPx) cw.style.height = chartHeightPx + 'px';
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+/** Блок «Авансовые отчёты» из /api/salary — для вкладок «Зарплаты» и «Список P&L декабрь». */
+function buildAdvanceReportsSection(sal, opts) {
+  const compact = !!(opts && opts.compact);
+  const cls = 'adv-card' + (compact ? ' adv-card-compact' : '');
+  if (!sal || sal.error) {
+    return `<div class="${cls}"><h3>Авансовые отчёты <span class="adv-badge">1С</span></h3><p class="adv-empty">Нет ответа API зарплат за период.</p></div>`;
+  }
+  const list = Array.isArray(sal.advance_reports) ? sal.advance_reports : [];
+  const tot = sal.advance_reports_total != null ? Number(sal.advance_reports_total) : list.reduce((s, r) => s + Number(r.amount || 0), 0);
+  const note = sal.advance_reports_note || '';
+  if (!list.length) {
+    return `<div class="${cls}"><h3>Авансовые отчёты <span class="adv-badge">1С</span></h3>
+      <p class="adv-lead">Документы <strong>«Авансовый отчёт»</strong> в выгрузке: подотчётные суммы по сотрудникам (командировки, закупки и т.п.). В этом файле за выбранный период таких документов нет.</p>
+      <p class="adv-foot">${escHtml(note)}</p></div>`;
+  }
+  const rows = list.map((r) => `<tr>
+    <td class="mono" style="color:var(--muted);font-size:11px">${escHtml(r.date || '—')}</td>
+    <td>${escHtml(r.employee_name || '—')}</td>
+    <td class="adv-amt">${fmtN(Number(r.amount || 0))}</td>
+  </tr>`).join('');
+  return `<div class="${cls}">
+    <h3>Авансовые отчёты <span class="adv-badge">1С</span></h3>
+    <p class="adv-lead">Список документов <strong>«Авансовый отчёт»</strong> из XML: дата документа, подотчётное лицо, <strong>сумма документа в BYN</strong>. Отдельно от <strong>ведомости зарплаты</strong> (таблицы выше).</p>
+    <div class="adv-kpi"><div><span class="adv-kpi-lab">Итого по авансовым отчётам</span></div><div class="adv-kpi-val">${fmtN(tot)} BYN</div></div>
+    <div style="overflow-x:auto"><table class="adv-table">
+      <thead><tr><th>Дата</th><th>Сотрудник</th><th class="adv-th-amt">Сумма BYN</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="adv-foot">${escHtml(note)}</p>
+  </div>`;
+}
+
+async function probeApiPeriods(base) {
+  const path = (base || '') + '/api/periods';
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 900);
+  try {
+    const res = await fetch(path, { signal: ctrl.signal });
+    const text = await res.text();
+    if (!res.ok) return false;
+    const j = JSON.parse(text);
+    return Array.isArray(j);
+  } catch (e) {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function discoverApiBase() {
+  try {
+    const qp = new URLSearchParams(window.location.search).get('api');
+    if (qp) {
+      const b = String(qp).replace(/\/$/, '');
+      if (await probeApiPeriods(b)) return b;
+      return null;
+    }
+  } catch (e) {}
+  const ports = [8080, 8765, 8877, 9000, 8081, 8082, 8083, 8084, 8085];
+  const tryOrder = [];
+  if (window.location.protocol !== 'file:') tryOrder.push('');
+  for (const p of ports) {
+    tryOrder.push('http://127.0.0.1:' + p);
+    tryOrder.push('http://localhost:' + p);
+  }
+  const seen = new Set();
+  for (const base of tryOrder) {
+    if (seen.has(base)) continue;
+    seen.add(base);
+    if (await probeApiPeriods(base)) return base;
+  }
+  return null;
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    throw new Error('Сервер вернул не JSON (HTTP ' + res.status + '). Перезапустите актуальный scripts/server.py. Фрагмент ответа: ' + String(text).slice(0, 160));
+  }
+  if (!res.ok) {
+    const msg = (data && data.error) ? data.error : ('HTTP ' + res.status);
+    const hint = (data && data.hint) ? ' ' + data.hint : '';
+    throw new Error(msg + hint);
+  }
+  return data;
+}
+
+function destroyCharts() {
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+}
+
+async function init() {
+  API = await discoverApiBase();
+  if (API === null) {
+    document.getElementById('content').innerHTML = `<div class="loading" style="max-width:520px;margin:0 auto;text-align:left;line-height:1.5">
+      <strong>API не найден (HTTP 404 или сервер не запущен).</strong><br><br>
+      В корне проекта выполните:<br>
+      <code style="color:var(--green)">python3 scripts/server.py</code><br><br>
+      Откройте в браузере <strong>тот URL, который покажет скрипт</strong> (часто <code>http://localhost:8080</code>; если порт занят — <code>8765</code> и т.д.).<br><br>
+      Для Live Preview / другого порта страница сама ищет API на 8080, 8765, … Если всё равно ошибка — добавьте в адрес: <code>?api=http://127.0.0.1:ПОРТ</code>
+    </div>`;
+    document.getElementById('periodBadge').textContent = 'нет API';
+    return;
+  }
+
+  const res = await fetch(API + '/api/periods');
+  const periods = await res.json();
+
+  const sel = document.getElementById('periodSelect');
+  sel.innerHTML = periods.map(p => `<option value="${p.period}">${p.period}</option>`).join('');
+
+  if (periods.length > 0) {
+    currentPeriod = periods[0].period;
+  }
+
+  // Build tabs
+  const tabsEl = document.getElementById('tabsContainer');
+  tabsEl.innerHTML = TABS.map(([k,l]) =>
+    `<button type="button" class="tab-btn ${k===currentTab?'active':''}" data-tab="${k}" onclick="switchTab('${k}')">${l}</button>`
+  ).join('');
+
+  loadPeriod();
+}
+
+function pickDecemberPeriod() {
+  const sel = document.getElementById('periodSelect');
+  const vals = [...(sel?.options || [])].map(o => o.value).filter(v => /^\d{4}-12$/.test(String(v || '')));
+  if (vals.length) {
+    vals.sort();
+    return vals[vals.length - 1];
+  }
+  return '2025-12';
+}
+
+function switchTab(tab) {
+  const prevTab = currentTab;
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const sel = document.getElementById('periodSelect');
+  if (tab === 'pnl_table' && prevTab !== 'pnl_table') {
+    if (sel && [...sel.options].some(o => o.value === '2025-12')) sel.value = '2025-12';
+  }
+  if (tab === 'pnl_dec_list') {
+    const dec = pickDecemberPeriod();
+    if (sel && [...sel.options].some(o => o.value === dec)) sel.value = dec;
+  }
+  loadPeriod();
+}
+
+async function loadPeriod() {
+  currentPeriod = document.getElementById('periodSelect').value;
+  document.getElementById('periodBadge').textContent = currentPeriod;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.dataset.tab === 'pnl_table') b.textContent = 'P&L ' + periodTitleRu(currentPeriod);
+    if (b.dataset.tab === 'salary') b.textContent = 'Зарплаты · ' + periodTitleRu(currentPeriod);
+  });
+  destroyCharts();
+
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="loading">Загрузка...</div>';
+
+  try {
+    if (currentTab === 'overview') await renderOverview(el);
+    else if (currentTab === 'pnl') await renderPnl(el);
+    else if (currentTab === 'pnl_table') await renderPnlTable(el);
+    else if (currentTab === 'pnl_dec_list') await renderPnlDecemberList(el);
+    else if (currentTab === 'salary') await renderSalary(el);
+    else if (currentTab === 'staff') await renderStaff(el);
+    else if (currentTab === 'assets') await renderAssets(el);
+    else if (currentTab === 'currency') await renderCurrency(el);
+  } catch(e) {
+    el.innerHTML = `<div class="loading">Ошибка: ${e.message}</div>`;
+  }
+}
+
+async function renderOverview(el) {
+  const d = await (await fetch(`${API}/api/overview?period=${currentPeriod}`)).json();
+  const saldo = d.income - d.expense;
+
+  el.innerHTML = `
+    <div class="grid grid-4">
+      <div class="metric"><div class="label">Поступления</div><div class="value" style="color:var(--green)">${fmtN(d.income)}</div><div class="sub">BYN</div></div>
+      <div class="metric"><div class="label">Списания</div><div class="value" style="color:var(--red)">${fmtN(d.expense)}</div><div class="sub">BYN</div></div>
+      <div class="metric"><div class="label">Сальдо</div><div class="value" style="color:var(--amber)">${fmtN(saldo)}</div><div class="sub">BYN</div></div>
+      <div class="metric"><div class="label">Операций</div><div class="value" style="color:var(--blue)">${d.daily.length}</div><div class="sub">дней</div></div>
+    </div>
+    ${d.currency_note ? `<p style="font-size:11px;color:var(--muted);margin:-4px 0 12px">${d.currency_note}</p>` : ''}
+    <div class="card" style="margin-bottom:14px"><h3>Движения средств (BYN)</h3><div class="chart-wrap"><canvas id="dailyChart"></canvas></div></div>
+    <div class="grid grid-2">
+      <div class="card"><h3>Категории расходов</h3><div class="chart-wrap chart-wrap-sm"><canvas id="catChart"></canvas></div></div>
+      <div class="card"><h3>Топ контрагентов</h3>
+        <table><thead><tr><th>Контрагент</th><th class="right">Сумма</th></tr></thead><tbody>
+        ${d.top_contragents.map(c => `<tr><td>${c.contragent_name}</td><td class="right mono">${fmtN(c.total)}</td></tr>`).join('')}
+        </tbody></table>
+      </div>
+    </div>
+  `;
+
+  const labels = d.daily.map(r => r.date.slice(8));
+  chartInstances.daily = new Chart(document.getElementById('dailyChart'), {
+    type:'bar', data: {
+      labels, datasets: [
+        {label:'Поступления', data:d.daily.map(r=>r.income), backgroundColor:'#4ade80'},
+        {label:'Списания', data:d.daily.map(r=>r.expense), backgroundColor:'rgba(248,113,113,0.8)'},
+      ]
+    }, options: { responsive:true, maintainAspectRatio:false, scales:{x:{ticks:{color:'#8b8fa3'}},y:{ticks:{color:'#8b8fa3',callback:fmtK}}}, plugins:{legend:{labels:{color:'#8b8fa3'}}}}
+  });
+
+  const catLabels = d.categories.filter(c=>c.total>0).map(c => c.vid_oplaty || 'Прочее');
+  const catData = d.categories.filter(c=>c.total>0).map(c => c.total);
+  chartInstances.cat = new Chart(document.getElementById('catChart'), {
+    type:'doughnut', data: { labels:catLabels, datasets:[{data:catData, backgroundColor:['#4ade80','#60a5fa','#fbbf24','#a78bfa','#f87171','#22d3ee']}] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{color:'#8b8fa3',font:{size:10}}}}}
+  });
+}
+
+async function renderSalary(el) {
+  const d = await fetchJson(`${API}/api/salary?period=${encodeURIComponent(currentPeriod)}`);
+  const rows = d.employees_detail || [];
+  const totalPayout = d.payouts.reduce((s,r) => s + r.total, 0);
+  const totalPayoutUsd = d.payouts.reduce((s, r) => s + Number(r.total_usd || 0), 0);
+  const totalCost = rows.reduce((s,e) => s + (e.company_cost_est || 0), 0);
+  const totalGross = rows.reduce((s,e) => s + (e.gross_accruals || 0), 0);
+  const nPeople = rows.length;
+  const chev = '<span class="sal-chev" aria-hidden="true"><svg viewBox="0 0 16 16" width="10" height="10"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+
+  function empBlock(e) {
+    const bonus = e.has_premiya ? '<span class="sal-tag">+премия</span>' : '';
+    const otherHint = Math.abs(e.accrual_other) > 0.005
+      ? '<span class="sal-lab-sub">(мат. помощь и т. п. — по видам из 1С)</span>' : '';
+    const subAvans = e.advance_in_calc_sheet > 0.005
+      ? `<div class="sal-row sub"><div><span class="sal-lab-main">⌞ в т.ч. аванс</span><span class="sal-lab-sub">учтён в расчётном листе</span></div><span class="num">${fmtN(e.advance_in_calc_sheet)}</span></div>` : '';
+    const prem = e.accrual_premiya > 0.005
+      ? `<div class="sal-row prem-accr"><div><span class="sal-lab-main">Премия</span><span class="sal-lab-sub">начисление · вид «Премия» / похожее в 1С</span></div><span class="num">${fmtN(e.accrual_premiya)}</span></div>` : '';
+    const oth = Math.abs(e.accrual_other) > 0.005
+      ? `<div class="sal-row"><div><span class="sal-lab-main">Прочие начисления</span>${otherHint}</div><span class="num">${fmtN(e.accrual_other)}</span></div>` : '';
+    return `<details class="salary-emp">
+      <summary>
+        ${chev}
+        <span class="sal-name-wrap"><span class="sal-name">${escHtml(e.employee_name)}</span>${bonus}</span>
+        <span class="sal-head-nums">
+          <span class="sal-hn-block"><span class="sal-hn-lab">стоим.</span><span class="sal-hn-val num cost">${fmtN(e.company_cost_est)}</span></span>
+          <span class="sal-hn-block"><span class="sal-hn-lab">начислено</span><span class="sal-hn-val num gross">${fmtN(e.gross_accruals)}</span></span>
+        </span>
+      </summary>
+      <div class="sal-panel"><div class="sal-panel-inner"><div class="salary-break">
+        <div class="sal-sec">Начисления</div>
+        <div class="sal-row"><div><span class="sal-lab-main">Оклад</span><span class="sal-lab-sub">начисление за период</span></div><span class="num">${fmtN(e.accrual_oklad)}</span></div>
+        ${subAvans}
+        ${prem}
+        ${oth}
+        <div class="sal-sec sal-sec-muted">Удержания с сотрудника</div>
+        <div class="sal-row deduct"><div><span class="sal-lab-main">Подоходный налог (13%)</span><span class="sal-lab-sub">удержание</span></div><span class="num">−${fmtN(e.pn_13)}</span></div>
+        <div class="sal-row deduct"><div><span class="sal-lab-main">Пенсионный фонд (1%)</span><span class="sal-lab-sub">удержание</span></div><span class="num">−${fmtN(e.pf_1)}</span></div>
+        <div class="sal-sec sal-sec-muted">Отчисления работодателя</div>
+        <div class="sal-row employer"><div><span class="sal-lab-main">ФСЗН (34%)</span><span class="sal-lab-sub">начисление работодателя · оценка</span></div><span class="num">${fmtN(e.fszn_34_est)}</span></div>
+        <div class="sal-row employer"><div><span class="sal-lab-main">Белгосстрах (0,6%)</span><span class="sal-lab-sub">начисление работодателя · оценка</span></div><span class="num">${fmtN(e.bgs_06_est)}</span></div>
+        <div class="sal-sec">Ведомость к выплате</div>
+        <div class="sal-row vedom sal-payout-salary"><div><span class="sal-lab-main">Зарплата</span><span class="sal-lab-sub">ведомость, вид «Зарплата»</span></div><span class="num">${fmtN(e.payout_salary)}</span></div>
+        <div class="sal-row vedom sal-payout-advance"><div><span class="sal-lab-main">Аванс</span><span class="sal-lab-sub">ведомость, вид «Аванс»</span></div><span class="num">${fmtN(e.payout_advance)}</span></div>
+        <div class="sal-row vedom sal-payout-other"><div><span class="sal-lab-main">Прочее</span><span class="sal-lab-sub">ведомость, вид «Прочее»: разовые выплаты, компенсации и т.п.</span></div><span class="num">${fmtN(e.payout_other)}</span></div>
+        <div class="sal-row sal-grand net"><div><span class="sal-lab-main">На руки</span><span class="sal-lab-sub">начисления − ПН − ПФ</span></div><span class="num">${fmtN(e.net_after_tax)}</span></div>
+        <div class="sal-row sal-grand sal-cost"><div><span class="sal-lab-main">Полная стоимость компании</span><span class="sal-lab-sub">оценка по ставкам ФСЗН и БГС</span></div><span class="num">${fmtN(e.company_cost_est)}</span></div>
+        <div class="sal-formula">начисл. + ФСЗН + Белгосстрах</div>
+      </div></div></div>
+    </details>`;
+  }
+
+  el.innerHTML = `
+    <div class="salary-page">
+    <p class="salary-note">${escHtml(d.notes || '')}</p>
+    <div class="grid grid-4">
+      <div class="metric"><div class="label">Сотрудников</div><div class="value num" style="color:var(--blue)">${nPeople}</div></div>
+      <div class="metric"><div class="label">К выплате (ведомость)</div><div class="value num" style="color:#6ee7b7">${fmtN(totalPayout)}</div><div class="sub">зелёный + синий + фиолетовый блоки ниже</div></div>
+      <div class="metric"><div class="label">Начислено всего</div><div class="value num" style="color:var(--cyan)">${fmtN(totalGross)}</div><div class="sub">по листу начислений</div></div>
+      <div class="metric"><div class="label">ФОТ с отчислениями</div><div class="value num" style="color:var(--amber)">${fmtN(totalCost)}</div><div class="sub">оценка ФСЗН + БГС</div></div>
+    </div>
+    <div class="card sal-chart-card sal-viz-card" style="margin-bottom:14px">
+      <div class="sal-viz-head">
+        <div>
+          <h3>Выплаты по ведомости</h3>
+          <p class="sal-viz-sub">Сравнение сотрудников по суммам из 1С (документ «Выплата по ведомости»). Цвета: <strong style="color:#6ee7b7">зарплата</strong>, <strong style="color:#93c5fd">аванс</strong>, <strong style="color:#c4b5fd">прочее</strong>.</p>
+        </div>
+        <div class="sal-viz-toggle" role="tablist" aria-label="Вид визуализации">
+          <button type="button" class="sal-viz-btn active" data-sal-viz="chart" role="tab" aria-selected="true">Диаграмма</button>
+          <button type="button" class="sal-viz-btn" data-sal-viz="table" role="tab" aria-selected="false">Таблица</button>
+          <button type="button" class="sal-viz-btn" data-sal-viz="usd" role="tab" aria-selected="false">Валюта</button>
+        </div>
+      </div>
+      <div class="sal-viz-legend" aria-hidden="true">
+        <span class="sal-leg"><i class="sal-sw sal-sw-salary"></i>Зарплата</span>
+        <span class="sal-leg"><i class="sal-sw sal-sw-advance"></i>Аванс</span>
+        <span class="sal-leg"><i class="sal-sw sal-sw-other"></i>Прочее (ведомость)</span>
+        <span class="sal-leg-note"><strong>Премия</strong> в графике не отдельным столбцом: она в <strong>начислениях</strong> внутри карточки сотрудника (плашка «+премия»).</span>
+      </div>
+      <p class="sal-prochee-hint"><strong>Прочее</strong> — строки ведомости с видом выплаты «Прочее» в 1С: разовые выплаты, компенсации, отпускные/больничные если так заведено, материальная помощь и т.д. — всё, что бухгалтер не отнёс к окладу или авансу.</p>
+      <div id="sal-chart-box" class="sal-viz-panel">
+        <div class="chart-wrap" style="height:${Math.max(140, d.payouts.length * 30 + 48)}px"><canvas id="salChart"></canvas></div>
+      </div>
+      <div id="sal-table-viz" class="sal-viz-panel" hidden>
+        <table class="sal-viz-table">
+          <thead><tr>
+            <th>Сотрудник</th>
+            <th class="right sal-th-salary">Зарплата</th>
+            <th class="right sal-th-advance">Аванс</th>
+            <th class="right sal-th-other">Прочее</th>
+            <th class="right sal-th-total">Итого</th>
+          </tr></thead>
+          <tbody>
+            ${d.payouts.map((r) => `<tr>
+              <td>${escHtml(r.employee_name)}</td>
+              <td class="right num c-sal">${fmtN(r.salary)}</td>
+              <td class="right num c-adv">${fmtN(r.advance)}</td>
+              <td class="right num c-oth">${r.other > 0.005 ? fmtN(r.other) : '—'}</td>
+              <td class="right num c-tot">${fmtN(r.total)}</td>
+            </tr>`).join('')}
+            <tr style="border-top:2px solid rgba(74,222,128,0.45);font-weight:700">
+              <td>Итого</td>
+              <td class="right num c-sal">${fmtN(d.payouts.reduce((s, r) => s + r.salary, 0))}</td>
+              <td class="right num c-adv">${fmtN(d.payouts.reduce((s, r) => s + r.advance, 0))}</td>
+              <td class="right num c-oth">${fmtN(d.payouts.reduce((s, r) => s + r.other, 0))}</td>
+              <td class="right num c-tot">${fmtN(totalPayout)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="sal-table-viz-usd" class="sal-viz-panel" hidden>
+        <table class="sal-viz-table">
+          <caption class="sal-viz-cap">Те же выплаты в <strong>USD</strong>: каждая строка ведомости переведена по курсу <strong>USD из выгрузки 1С на дату этой выплаты</strong> (сколько BYN за 1 USD).</caption>
+          <thead><tr>
+            <th>Сотрудник</th>
+            <th class="right sal-th-salary">Зарплата<br><span style="font-size:9px;font-weight:600;opacity:0.85">USD</span></th>
+            <th class="right sal-th-advance">Аванс<br><span style="font-size:9px;font-weight:600;opacity:0.85">USD</span></th>
+            <th class="right sal-th-other">Прочее<br><span style="font-size:9px;font-weight:600;opacity:0.85">USD</span></th>
+            <th class="right sal-th-total">Итого<br><span style="font-size:9px;font-weight:600;opacity:0.85">USD</span></th>
+          </tr></thead>
+          <tbody>
+            ${d.payouts.map((r) => `<tr>
+              <td>${escHtml(r.employee_name)}</td>
+              <td class="right num c-sal">${fmtN(Number(r.salary_usd || 0))}</td>
+              <td class="right num c-adv">${fmtN(Number(r.advance_usd || 0))}</td>
+              <td class="right num c-oth">${Number(r.other_usd || 0) > 0.005 ? fmtN(Number(r.other_usd || 0)) : '—'}</td>
+              <td class="right num c-tot">${fmtN(Number(r.total_usd || 0))}</td>
+            </tr>`).join('')}
+            <tr style="border-top:2px solid rgba(74,222,128,0.45);font-weight:700">
+              <td>Итого</td>
+              <td class="right num c-sal">${fmtN(d.payouts.reduce((s, r) => s + Number(r.salary_usd || 0), 0))}</td>
+              <td class="right num c-adv">${fmtN(d.payouts.reduce((s, r) => s + Number(r.advance_usd || 0), 0))}</td>
+              <td class="right num c-oth">${fmtN(d.payouts.reduce((s, r) => s + Number(r.other_usd || 0), 0))}</td>
+              <td class="right num c-tot">${fmtN(totalPayoutUsd)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="sal-usd-note">${escHtml(d.payouts_usd_note || 'Курс USD — из регистра курсов этой выгрузки 1С, на дату каждой выплаты по ведомости.')}</p>
+      </div>
+    </div>
+    <div class="card salary-card-list" style="margin-bottom:14px"><h3>Сотрудники — начислено (${nPeople} чел.) · ${periodTitleRu(currentPeriod)}</h3>
+      <p style="font-size:11px;color:var(--muted);margin:-8px 0 14px;line-height:1.45">Разверните карточку: начисления (оклад, <strong style="color:var(--sal-c-premiya)">премия</strong>, прочие виды), удержания, взносы и блок ведомости с теми же цветами, что на диаграмме.</p>
+      ${rows.length ? rows.map(empBlock).join('') : '<p class="salary-note">Нет данных.</p>'}
+    </div>
+    <div class="card"><h3>Полная таблица ведомости</h3>
+    <p style="font-size:11px;color:var(--muted);margin:-6px 0 12px;line-height:1.45">Те же суммы, что на диаграмме / компактной таблице выше — для копирования и сверки с 1С.</p>
+    <table class="sal-vedom-table"><thead><tr><th>Сотрудник</th><th class="right sal-th-salary">Зарплата</th><th class="right sal-th-advance">Аванс</th><th class="right sal-th-other">Прочее</th><th class="right">Итого</th></tr></thead><tbody>
+    ${d.payouts.map(r => `<tr>
+      <td>${escHtml(r.employee_name)}</td>
+      <td class="right num c-sal">${fmtN(r.salary)}</td>
+      <td class="right num c-adv">${fmtN(r.advance)}</td>
+      <td class="right num c-oth">${r.other > 0.005 ? fmtN(r.other) : '—'}</td>
+      <td class="right num c-tot">${fmtN(r.total)}</td>
+    </tr>`).join('')}
+    <tr style="border-top:2px solid rgba(74,222,128,0.45);font-weight:700">
+      <td>ИТОГО</td>
+      <td class="right num c-sal">${fmtN(d.payouts.reduce((s,r)=>s+r.salary,0))}</td>
+      <td class="right num c-adv">${fmtN(d.payouts.reduce((s,r)=>s+r.advance,0))}</td>
+      <td class="right num c-oth">${fmtN(d.payouts.reduce((s,r)=>s+r.other,0))}</td>
+      <td class="right num c-tot">${fmtN(totalPayout)}</td>
+    </tr>
+    </tbody></table></div>
+    ${buildAdvanceReportsSection(d, {})}
+    </div>
+  `;
+
+  const salChartH = Math.max(140, d.payouts.length * 30 + 48);
+  wireSalaryViz(el, d, salChartH);
+}
+
+async function renderCurrency(el) {
+  const d = await (await fetch(`${API}/api/currency?period=${currentPeriod}`)).json();
+  const byCur = {};
+  d.rates.forEach(r => { if(!byCur[r.currency_name]) byCur[r.currency_name]=[]; byCur[r.currency_name].push(r); });
+
+  const colors = {EUR:'#60a5fa', USD:'#4ade80', PLN:'#fbbf24'};
+
+  el.innerHTML = Object.entries(byCur).map(([cur, rates]) => {
+    const last = rates[rates.length-1]?.rate || 0;
+    const first = rates[0]?.rate || 0;
+    const change = ((last-first)/first*100).toFixed(1);
+    return `
+      <div class="card" style="margin-bottom:14px">
+        <h3>${cur}/BYN — ${last.toFixed(4)} <span style="color:${change>0?'var(--green)':'var(--red)'}">(${change>0?'+':''}${change}%)</span></h3>
+        <div class="chart-wrap chart-wrap-sm"><canvas id="chart_${cur}"></canvas></div>
+      </div>
+    `;
+  }).join('');
+
+  Object.entries(byCur).forEach(([cur, rates]) => {
+    chartInstances[cur] = new Chart(document.getElementById(`chart_${cur}`), {
+      type:'line', data: {
+        labels: rates.map(r => r.date.slice(8)),
+        datasets: [{label:cur+'/BYN', data:rates.map(r=>r.rate), borderColor:colors[cur]||'#a78bfa', backgroundColor:colors[cur]+'33', fill:true, tension:0.3, pointRadius:2}]
+      }, options: { responsive:true, maintainAspectRatio:false, scales:{x:{ticks:{color:'#8b8fa3'}},y:{ticks:{color:'#8b8fa3'}}}, plugins:{legend:{display:false}}}
+    });
+  });
+}
+
+async function renderStaff(el) {
+  const d = await (await fetch(`${API}/api/staff`)).json();
+  const males = d.active.filter(s => s.gender === 'Муж').length;
+  const females = d.active.filter(s => s.gender === 'Жен').length;
+
+  el.innerHTML = `
+    <div class="grid grid-4">
+      <div class="metric"><div class="label">Активных</div><div class="value" style="color:var(--green)">${d.active.length}</div></div>
+      <div class="metric"><div class="label">Уволенных</div><div class="value" style="color:var(--red)">${d.fired.length}</div></div>
+      <div class="metric"><div class="label">М / Ж</div><div class="value" style="color:var(--blue)">${males} / ${females}</div></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><h3>Действующие (${d.active.length})</h3>
+      <table><thead><tr><th>ФИО</th><th>Принят</th><th>Договор</th></tr></thead><tbody>
+      ${d.active.map(s => `<tr><td>${s.name}</td><td class="mono" style="color:var(--muted);font-size:10px">${s.hired}</td><td style="font-size:10px">${s.contract_type}</td></tr>`).join('')}
+      </tbody></table></div>
+      <div class="card"><h3>Уволенные (${d.fired.length})</h3>
+      <table><thead><tr><th>ФИО</th><th>Принят</th><th>Уволен</th></tr></thead><tbody>
+      ${d.fired.map(s => `<tr><td style="color:var(--muted)">${s.name}</td><td class="mono" style="color:var(--muted);font-size:10px">${s.hired}</td><td class="mono" style="color:var(--red);font-size:10px">${s.fired}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+  `;
+}
+
+async function renderAssets(el) {
+  const d = await (await fetch(`${API}/api/assets`)).json();
+  el.innerHTML = `
+    <div class="metric" style="margin-bottom:14px"><div class="label">Всего ОС</div><div class="value" style="color:var(--blue)">${d.assets.length}</div></div>
+    <div class="card"><h3>Реестр основных средств</h3>
+    <table><thead><tr><th>Инв.№</th><th>Наименование</th><th>Ввод</th></tr></thead><tbody>
+    ${d.assets.map(a => `<tr><td class="mono" style="color:var(--muted)">${a.inv_number}</td><td>${a.name}</td><td class="mono" style="color:var(--muted);font-size:10px">${a.commissioned_date}</td></tr>`).join('')}
+    </tbody></table></div>
+  `;
+}
+
+function plEmpHeadRowToggle(ev) {
+  const row = ev.currentTarget;
+  const id = row.getAttribute('data-pl-detail-target');
+  if (!id) return;
+  const detail = document.getElementById(id);
+  if (!detail) return;
+  detail.hidden = !detail.hidden;
+  row.classList.toggle('pl-open', !detail.hidden);
+  row.setAttribute('aria-expanded', detail.hidden ? 'false' : 'true');
+}
+
+function plEmpHeadRowKeydown(ev) {
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  ev.preventDefault();
+  plEmpHeadRowToggle(ev);
+}
+
+/** После innerHTML — навешиваем слушатели (делегирование с document ломалось при смене вкладок/контента). */
+function bindPlEmpPnlRows(container) {
+  if (!container) return;
+  container.querySelectorAll('.pl-emp-head-row').forEach((row) => {
+    row.addEventListener('click', plEmpHeadRowToggle);
+    row.addEventListener('keydown', plEmpHeadRowKeydown);
+  });
+}
+
+function mergePlExpand(raw) {
+  const z = {
+    ref_date: '',
+    oklad_byn: 0, oklad_usd: 0, advance_byn: 0, advance_usd: 0,
+    premiya_byn: 0, premiya_usd: 0, other_byn: 0, other_usd: 0,
+    pn_byn: 0, pn_usd: 0, pf_byn: 0, pf_usd: 0,
+    fszn_byn: 0, fszn_usd: 0, bgs_byn: 0, bgs_usd: 0, net_byn: 0, net_usd: 0,
+  };
+  let x = raw;
+  if (x == null) return z;
+  if (typeof x === 'string') {
+    try { x = JSON.parse(x); } catch (e) { return z; }
+  }
+  if (Array.isArray(x)) return z;
+  if (typeof x === 'object') {
+    Object.assign(z, x);
+    ['oklad_byn','oklad_usd','advance_byn','advance_usd','premiya_byn','premiya_usd','other_byn','other_usd','pn_byn','pn_usd','pf_byn','pf_usd','fszn_byn','fszn_usd','bgs_byn','bgs_usd','net_byn','net_usd'].forEach((k) => {
+      if (z[k] != null && z[k] !== '') z[k] = Number(z[k]) || 0;
+    });
+  }
+  return z;
+}
+
+async function fetchPnlTableData(period) {
+  const enc = encodeURIComponent(period);
+  const urls = [
+    `${API}/api/pnl?period=${enc}&format=table`,
+    `${API}/api/pnl-table?period=${enc}`,
+    `${API}/api/pnl_table?period=${enc}`,
+  ];
+  let d;
+  let lastErr;
+  for (const url of urls) {
+    try {
+      d = await fetchJson(url);
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (!d) throw lastErr || new Error('P&L таблица: нет ответа API');
+  return d;
+}
+
+function buildPnlTableBodyAndFoot(d, tableOpts) {
+  const bynOnly = tableOpts && tableOpts.bynOnly;
+  let body = '';
+  let plEmpSeq = 0;
+  const secs = d.sections || [];
+  const rowOpt = bynOnly ? { bynOnly: true } : undefined;
+  for (const sec of secs) {
+    const isEmpSec = sec.id === 'employees' || /сотрудник/i.test(String(sec.title || ''));
+    body += plRow(sec.title, '', '', '', 'pl-sec', rowOpt);
+    if (sec.subtitle) body += plRow('', sec.subtitle, '', '', 'pl-foot', rowOpt);
+    for (const r of sec.rows || []) {
+      if (isEmpSec) {
+        body += plPnlEmployeeRow(r, 'pl-emp-d-' + (plEmpSeq++), { bynOnly });
+      } else {
+        body += plRow('', r.label, r.usd, r.byn, r.kind === 'subtotal' ? 'pl-subtotal' : '', rowOpt);
+      }
+    }
+    if (sec.subtotal) {
+      const st = sec.subtotal;
+      body += plRow('', st.label, st.usd, st.byn, 'pl-subtotal', rowOpt);
+    }
+  }
+  let foot = '';
+  for (const r of d.footnotes || []) {
+    foot += plRow('', r.label, r.usd, r.byn, 'pl-foot', rowOpt);
+  }
+  return { body, foot };
+}
+
+function plRow(a, b, usd, byn, cls, opts) {
+  const bynOnly = opts && opts.bynOnly;
+  let u = '';
+  if (bynOnly) u = '<span class="pl-byn-only-dash">—</span>';
+  else if (usd != null && usd !== '') u = fmtN(usd) + ' USD';
+  const b2 = byn != null && byn !== '' ? fmtN(byn) : '';
+  return `<tr class="${cls||''}"><td class="pl-c-a">${a||''}</td><td class="pl-c-b">${b||''}</td><td class="pl-num">${u}</td><td class="pl-num">${b2}</td></tr>`;
+}
+
+function plPnlExpandLine(label, hint, usd, byn, rowCls, numCls, lineOpts, midTag) {
+  const bynOnly = lineOpts && lineOpts.bynOnly;
+  const neg = numCls === 'pl-neg';
+  let u;
+  if (bynOnly) u = '<span class="pl-byn-only-dash">—</span>';
+  else if (usd != null) u = (neg ? '−' : '') + fmtN(Math.abs(Number(usd))) + ' USD';
+  else u = '';
+  const b2 = byn != null ? (neg ? '−' : '') + fmtN(Math.abs(Number(byn))) : '';
+  const h = hint ? `<span class="pl-hint">${escHtml(hint)}</span>` : '';
+  const mid = midTag ? `<span class="pl-exp-mid-tag">${escHtml(midTag)}</span>` : '';
+  return `<tr class="pl-exp-line ${rowCls || ''}"><td class="pl-c-a pl-exp-mid-cell">${mid}</td><td class="pl-c-b">${escHtml(label)}${h}</td><td class="pl-num ${numCls || ''}">${u}</td><td class="pl-num ${numCls || ''}">${b2}</td></tr>`;
+}
+
+function plPnlEmployeeRow(r, detailDomId, rowOpts) {
+  const bynOnly = rowOpts && rowOpts.bynOnly;
+  const lineOpt = bynOnly ? { bynOnly: true } : undefined;
+  const x = mergePlExpand(r.expand);
+  const did = String(detailDomId).replace(/[^a-zA-Z0-9_-]/g, '') || 'pl-emp-d';
+  const gB = (Number(x.oklad_byn) || 0) + (Number(x.premiya_byn) || 0) + (Number(x.other_byn) || 0);
+  const gU = (Number(x.oklad_usd) || 0) + (Number(x.premiya_usd) || 0) + (Number(x.other_usd) || 0);
+  const ccB = gB + (Number(x.fszn_byn) || 0) + (Number(x.bgs_byn) || 0);
+  const ccU = gU + (Number(x.fszn_usd) || 0) + (Number(x.bgs_usd) || 0);
+  const hasPrem = (Number(x.premiya_byn) > 0.005) || (Number(x.premiya_usd) > 0.005);
+  const grossOk = gB > 0.005 || gU > 0.005;
+  let inner = '';
+  inner += plPnlExpandLine('Оклад', '', x.oklad_usd, x.oklad_byn, '', '', lineOpt, '');
+  if (x.advance_byn > 0.005 || x.advance_usd > 0.005) {
+    inner += plPnlExpandLine('└ аванс', '', x.advance_usd, x.advance_byn, 'pl-sub', '', lineOpt, '');
+  }
+  if (hasPrem) {
+    inner += plPnlExpandLine('Премия', '', x.premiya_usd, x.premiya_byn, '', '', lineOpt, '');
+  }
+  if (Math.abs(x.other_byn) > 0.005 || Math.abs(x.other_usd) > 0.005) {
+    inner += plPnlExpandLine('Прочие', '', x.other_usd, x.other_byn, '', '', lineOpt, '');
+  }
+  inner += plPnlExpandLine('ПН (13%)', '', x.pn_usd, x.pn_byn, '', 'pl-neg', lineOpt, 'удерж.');
+  inner += plPnlExpandLine('ПФ (1%)', '', x.pf_usd, x.pf_byn, '', 'pl-neg', lineOpt, 'удерж.');
+  inner += plPnlExpandLine('ФСЗН (34%)', '', x.fszn_usd, x.fszn_byn, '', 'pl-pos', lineOpt, 'работод.');
+  inner += plPnlExpandLine('БГС (0,6%)', '', x.bgs_usd, x.bgs_byn, '', 'pl-pos', lineOpt, 'работод.');
+  inner += plPnlExpandLine('На руки', '', x.net_usd, x.net_byn, 'pl-net', '', lineOpt, '');
+  inner += plPnlExpandLine('Стоимость компании', '', ccU, ccB, 'pl-emp-cc-line', '', lineOpt, '');
+  const ref = x.ref_date ? escHtml(String(x.ref_date)) : '';
+  const usdCell = bynOnly
+    ? `<div class="pl-emp-head-stoim"><span class="pl-stoim-lab">стоим.</span><span class="num">${fmtN(ccB)}</span></div>`
+    : `<div class="pl-emp-usd-stack"><span>${fmtN(r.usd)} USD</span><div class="pl-emp-byn-sub">стоим. ${fmtN(ccB)} BYN</div></div>`;
+  const bynMain = fmtN(r.byn);
+  const bynSub = grossOk
+    ? `<div class="pl-emp-byn-sub">начислено ${fmtN(gB)}</div>`
+    : '';
+  const footTxt = bynOnly
+    ? `BYN из 1С: начисления и ведомость. Дата для курса: ${ref || '—'}. ФСЗН и БГС — оценка по ставкам (как на «Зарплаты»).`
+    : `BYN из начислений; USD по курсу НБ на ${ref || '—'}. ФСЗН и БГС — оценка по ставкам.`;
+  const badge = hasPrem ? '<span class="pl-emp-badge">+премия</span>' : '';
+  const head = `<tr class="pl-emp-head-row" role="button" tabindex="0" aria-expanded="false" data-pl-detail-target="${did}" title="Развернуть детализацию">
+    <td class="pl-c-a"><span class="pl-chev" aria-hidden="true">▸</span></td>
+    <td class="pl-c-b"><div class="pl-emp-head-name"><span class="pl-emp-name">${escHtml(r.label)}</span>${badge}</div></td>
+    <td class="pl-num">${usdCell}</td>
+    <td class="pl-num pl-byn-cell"><div class="pl-emp-byn-main num">${bynMain}</div>${bynSub}</td>
+  </tr>`;
+  const detail = `<tr class="pl-emp-detail-row" id="${did}" hidden>
+    <td colspan="4" class="pl-emp-cell"><div class="pl-emp-detail-inner"><div class="pl-emp-b">
+      <table class="pl-table"><tbody>${inner}</tbody></table>
+      <p class="pl-emp-foot">${footTxt}</p>
+    </div></div></td>
+  </tr>`;
+  return head + detail;
+}
+
+function pnlTableMainHtml(d, periodLabel, topBannerHtml, tableOpts) {
+  const bynOnly = tableOpts && tableOpts.bynOnly;
+  const s = d.summary || {};
+  const margin = s.margin_pct != null ? `Рентабельность по поступлениям банка: ${fmtN(s.margin_pct)}%` : '';
+  const src = d.source_file ? `<div class="pl-note" style="margin-bottom:10px;color:var(--cyan)">Файл выгрузки 1С (папка <code>data/</code>): <strong>${escHtml(d.source_file)}</strong></div>` : '';
+  const { body, foot } = buildPnlTableBodyAndFoot(d, tableOpts);
+  const metricMain = bynOnly
+    ? `<div class="value" style="color:var(--amber)">${fmtN(s.expense_pnl_byn || 0)} BYN</div>
+       <div class="sub">Расходы P&L в белорусских рублях по операциям из выгрузки. Поступления по банку: ${fmtN(s.income_byn || 0)} BYN.</div>`
+    : `<div class="value" style="color:var(--amber)">${fmtN(s.expense_pnl_usd || 0)} USD</div>
+       <div class="sub">${fmtN(s.expense_pnl_byn || 0)} BYN · поступления ${fmtN(s.income_usd || 0)} USD / ${fmtN(s.income_byn || 0)} BYN</div>`;
+  const theadUsd = bynOnly ? 'USD <span class="pl-th-muted">(скрыто)</span>' : 'USD (курс на дату)';
+  const noteBlock = bynOnly
+    ? `<div class="pl-note">На этой вкладке все денежные колонки — <strong>только BYN</strong> из базы после <code>parse_1c.py</code> по вашему XML. Столбец USD не используется.${d.byn_sources ? '<br><br>' + escHtml(d.byn_sources) : ''}</div>`
+    : `<div class="pl-note">${d.usd_note || ''} Средний курс USD за период (справочно): ${(d.usd_avg || 0).toFixed(4)} BYN/USD.</div>`;
+  const sumUsd = (v) => (bynOnly ? '<span class="pl-byn-only-dash">—</span>' : `${fmtN(v)} USD`);
+  return `
+    ${topBannerHtml || ''}
+    <div class="metric" style="margin-bottom:12px">
+      <div class="label">Сводка P&L (без внутренних переводов и без дубля ФОТ по банку)</div>
+      ${metricMain}
+    </div>
+    <div class="card pl-card">
+      <h2>P&L · ${escHtml(d.period_title || periodLabel)}</h2>
+      ${src}
+      ${noteBlock}
+      <div class="pl-wrap">
+        <table class="pl-table ${bynOnly ? 'pl-table-byn-only' : ''}">
+          <thead><tr>
+            <th class="pl-c-name"></th>
+            <th class="pl-c-name">Статья</th>
+            <th>${theadUsd}</th>
+            <th>BYN (1С)</th>
+          </tr></thead>
+          <tbody>
+            ${body}
+            <tr class="pl-sumhead"><td colspan="2">Расходы за месяц (P&L)</td><td class="pl-num">${sumUsd(s.expense_pnl_usd)}</td><td class="pl-num">${fmtN(s.expense_pnl_byn)}</td></tr>
+            <tr class="pl-sumhead"><td colspan="2">Поступления за месяц (банк)</td><td class="pl-num">${sumUsd(s.income_usd)}</td><td class="pl-num">${fmtN(s.income_byn)}</td></tr>
+            <tr class="pl-total-exp"><td colspan="2">Общие расходы P&L</td><td class="pl-num">${sumUsd(s.expense_pnl_usd)}</td><td class="pl-num">${fmtN(s.expense_pnl_byn)}</td></tr>
+            <tr class="pl-foot"><td colspan="4">${margin}</td></tr>
+            <tr class="pl-foot"><td colspan="4">Всего списано по выписке (в т.ч. переводы между счетами): ${fmtN(s.bank_expense_total_byn || 0)} BYN · из них внутренние переводы: ${fmtN(s.internal_transfer_byn || 0)} BYN</td></tr>
+            ${foot}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+async function renderPnlTable(el) {
+  const d = await fetchPnlTableData(currentPeriod);
+  if (d.error) {
+    el.innerHTML = `<div class="loading">${escHtml(d.error)}</div>`;
+    return;
+  }
+  const secs = d.sections || [];
+  const src0 = d.source_file ? `<div class="pl-note" style="margin-bottom:10px;color:var(--cyan)">Файл выгрузки 1С (папка <code>data/</code>): <strong>${escHtml(d.source_file)}</strong></div>` : '';
+  if (!secs.length) {
+    el.innerHTML = `<div class="card pl-card"><h2>P&L · ${escHtml(d.period_title || currentPeriod)}</h2>${src0}<p class="pl-note">Нет данных для таблицы. Положите XML в <code>data/</code> и выполните <code>python3 scripts/parse_1c.py data/</code>.</p></div>`;
+    return;
+  }
+  el.innerHTML = pnlTableMainHtml(d, currentPeriod, '', null);
+  bindPlEmpPnlRows(el);
+}
+
+async function renderPnlDecemberList(el) {
+  const period = pickDecemberPeriod();
+  let d;
+  try {
+    d = await fetchPnlTableData(period);
+  } catch (e) {
+    el.innerHTML = `<div class="loading">Ошибка: ${escHtml(e.message)}</div>`;
+    return;
+  }
+  if (d.error) {
+    el.innerHTML = `<div class="loading">${escHtml(String(d.error))}</div>
+      <p class="pl-note" style="margin-top:14px;max-width:640px">Вкладка всегда запрашивает <strong>декабрь</strong> (последний доступный <code>YYYY-12</code> в списке периодов). Добавьте выгрузку за декабрь и выполните <code>python3 scripts/parse_1c.py data/</code>.</p>`;
+    return;
+  }
+  const secs = d.sections || [];
+  const src0 = d.source_file ? `<div class="pl-note" style="margin-bottom:10px;color:var(--cyan)">Файл: <strong>${escHtml(d.source_file)}</strong></div>` : '';
+  if (!secs.length) {
+    el.innerHTML = `<div class="pl-dec-test-banner">Тестовая вкладка · период <strong>${escHtml(period)}</strong></div>
+      <div class="card pl-card"><h2>Список P&L · декабрь</h2>${src0}<p class="pl-note">Нет секций в таблице для этого периода.</p></div>`;
+    return;
+  }
+  const banner = `<div class="pl-dec-test-banner"><strong>Список P&L · декабрь.</strong> Период: <strong>${escHtml(period)}</strong> — данные из SQLite после <code>parse_1c.py</code> по файлу выгрузки. Вся вкладка в <strong>BYN</strong> (ведомость, начисления из 1С). Строки сотрудников с оранжевой полосой: клик по строке открывает детализацию; плашка <strong>+премия</strong> — если в начислениях есть премия. Ниже — <strong>авансовые отчёты</strong> за тот же период файла.</div>`;
+  let sal = {};
+  try {
+    sal = await fetchJson(`${API}/api/salary?period=${encodeURIComponent(period)}`);
+  } catch (e) {
+    sal = { error: String(e.message || e) };
+  }
+  el.innerHTML = pnlTableMainHtml(d, period, banner, { bynOnly: true }) + buildAdvanceReportsSection(sal, { compact: true });
+  bindPlEmpPnlRows(el);
+}
+
+async function renderPnl(el) {
+  const d = await (await fetch(`${API}/api/pnl?period=${currentPeriod}`)).json();
+  const usd = d.usd_avg;
+  const toU = (byn) => byn / usd;
+
+  const t = d.totals || {};
+  const rowB = (r) => (r.amount_byn != null ? r.amount_byn : r.amount);
+  const totalIncome = t.total_income != null ? t.total_income : d.income.reduce((s, r) => s + rowB(r), 0);
+  const totalExpense = t.total_expense != null ? t.total_expense : d.expenses.reduce((s, r) => s + rowB(r), 0);
+  let taxTotal = t.tax_podoh != null ? t.tax_podoh : 0;
+  let fsznTotal = t.fszn != null ? t.fszn : 0;
+  const salaryBank = t.salary_bank != null ? t.salary_bank : 0;
+  const salaryPayoutTotal = t.salary_payout != null ? t.salary_payout : 0;
+  const otherBank = t.other_bank != null ? t.other_bank : (totalExpense - taxTotal - fsznTotal - salaryBank);
+  const byVid = t.expense_by_vid || [];
+
+  if ((taxTotal === 0 && fsznTotal === 0) && d.expenses && d.expenses.length) {
+    d.expenses.forEach(e => {
+      const a = e.amount_byn != null ? e.amount_byn : e.amount;
+      if (e.content.includes('ПОДОХОДНЫЙ')) taxTotal += a;
+      if (e.content.includes('СТРАХОВЫЕ ВЗНОСЫ')) fsznTotal += a;
+    });
+  }
+
+  let salaryTotal = salaryPayoutTotal;
+  const empPayouts = {};
+  d.payouts.forEach(p => {
+    if (!empPayouts[p.employee_name]) empPayouts[p.employee_name] = 0;
+    empPayouts[p.employee_name] += p.total;
+  });
+  if (!salaryPayoutTotal && d.payouts.length) {
+    salaryTotal = 0;
+    d.payouts.forEach(p => { salaryTotal += p.total; });
+  }
+
+  const recon = salaryBank + taxTotal + fsznTotal + otherBank;
+  const reconOk = Math.abs(recon - totalExpense) < 0.02;
+
+  const V = (byn, color) => `<span class="pnl-vals"><span class="byn">${fmtN(byn)} BYN</span><span class="usd" style="color:${color||'var(--text)'}">${fmtN(toU(byn))} $</span></span>`;
+
+  const empRows = Object.entries(empPayouts).sort((a,b) => b[1]-a[1])
+    .map(([name, total]) => `<div class="pnl-row sub"><span>${name.split(' ').slice(0,2).join(' ')}</span>${V(total)}</div>`).join('');
+
+  const vidRows = byVid.map(r => `<div class="pnl-row sub"><span>${r.vid || '—'}</span>${V(r.total)}</div>`).join('');
+  const deltaVedBank = salaryTotal - salaryBank;
+
+  el.innerHTML = `
+    <div class="grid grid-4">
+      <div class="metric"><div class="label">Выручка</div><div class="value" style="color:var(--green)">${fmtN(toU(totalIncome))} $</div><div class="sub">${fmtN(totalIncome)} BYN</div></div>
+      <div class="metric"><div class="label">Расходы (банк)</div><div class="value" style="color:var(--red)">${fmtN(toU(totalExpense))} $</div><div class="sub">${fmtN(totalExpense)} BYN</div></div>
+      <div class="metric"><div class="label">Курс USD</div><div class="value" style="color:var(--amber)">${usd.toFixed(4)}</div><div class="sub">средний за месяц</div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>P&L · ${currentPeriod} · ООО Лоппи Поппи</h3>
+      <div style="font-size:11px;color:var(--muted);margin:-8px 0 12px">
+        Разбивка «Расходы (банк)» = ФОТ по выписке + подоходный + ФСЗН (по тексту платежа) + всё остальное (поставщики, валюта, переводы между счетами и т.д.).
+        Выплаты по ведомостям — отдельный документ 1С; сумма может отличаться от списаний по банку на даты/корректировки. Курс: ${usd.toFixed(4)} USD/BYN.
+      </div>
+
+      <div class="pnl-section">1. Сотрудники — выплаты по ведомости</div>
+      ${empRows}
+      <div class="pnl-row total"><span>ИТОГО по ведомости</span>${V(salaryTotal, 'var(--amber)')}</div>
+      <div class="pnl-row sub"><span>Списания «оплата труда / зарплата» по банку (сверка)</span>${V(salaryBank, 'var(--cyan)')}</div>
+      <div class="pnl-row sub" style="color:var(--muted);font-size:11px"><span>Разница ведомость − банк</span>${V(deltaVedBank, Math.abs(deltaVedBank) > 0.02 ? 'var(--amber)' : 'var(--muted)')}</div>
+
+      <div class="pnl-section">2. Налоги и взносы (по тексту в выписке)</div>
+      <div class="pnl-row sub"><span>Подоходный (ключ «ПОДОХОДНЫЙ»)</span>${V(taxTotal)}</div>
+      <div class="pnl-row sub"><span>ФСЗН (ключ «СТРАХОВЫЕ ВЗНОСЫ»)</span>${V(fsznTotal)}</div>
+      <div class="pnl-row total"><span>ИТОГО налоги</span>${V(taxTotal + fsznTotal, 'var(--amber)')}</div>
+      <div style="font-size:10px;color:var(--muted);padding:4px 12px 8px">Платежи с другой формулировкой попадут в «остальное», а не в эту строку.</div>
+
+      <div class="pnl-section">3. Остальные списания по банку</div>
+      <div class="pnl-row total"><span>После вычета ФОТ (банк) и налоговых ключей</span>${V(otherBank, 'var(--red)')}</div>
+      <div style="font-size:11px;color:var(--muted);padding:6px 12px">В т.ч. внутренние переводы, покупка/продажа валюты, поставщики, добровольные взносы и пр., если не попали под ключи выше.</div>
+
+      <div class="pnl-section">Списания по виду оплаты (1С)</div>
+      ${vidRows}
+
+      <div class="pnl-row total" style="margin-top:8px;border-top:2px solid var(--border)">
+        <span>Сверка: ФОТ (банк) + налоги + остальное</span>${V(recon, reconOk ? 'var(--green)' : 'var(--amber)')}
+      </div>
+      <div class="pnl-row sub" style="color:${reconOk ? 'var(--green)' : 'var(--red)'};font-size:11px">
+        ${reconOk ? 'Совпадает с полной суммой списаний по выписке.' : 'Расхождение с суммой выписки — сообщите, проверим классификатор.'}
+      </div>
+
+      <div class="pnl-row grand" style="color:var(--red);background:rgba(248,113,113,0.07);margin-top:12px">
+        <span>ВСЕГО списано по банку</span>${V(totalExpense, 'var(--red)')}
+      </div>
+      <div class="pnl-row grand" style="color:var(--green);background:rgba(74,222,128,0.07);margin-top:4px">
+        <span>ВСЕГО поступило по банку</span>${V(totalIncome, 'var(--green)')}
+      </div>
+    </div>
+  `;
+}
+
+init();
+</script>
+</body>
+</html>

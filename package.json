@@ -1,0 +1,14 @@
+{
+  "name": "color-dots-web",
+  "private": true,
+  "description": "Static Color Dots game served for Railway",
+  "scripts": {
+    "start": "serve color-dots-web -l tcp://0.0.0.0:${PORT}"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

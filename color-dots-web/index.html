@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a0b4d" />
+    <meta name="description" content="Color Dots — connect matching dots, fill the grid, lines can't cross." />
+    <title>Color Dots</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="phone-frame">
+        <div class="phone-inner">
+          <!-- Home -->
+          <section id="screen-home" class="screen active">
+            <nav class="home-tabs" role="tablist" aria-label="Main sections">
+              <button type="button" class="home-tab home-tab--active" role="tab" id="tab-game" aria-selected="true" aria-controls="home-panel-game">
+                Game
+              </button>
+              <button type="button" class="home-tab" role="tab" id="tab-daily" aria-selected="false" aria-controls="home-panel-daily">
+                Daily Challenge
+              </button>
+            </nav>
+
+            <div id="home-panel-game" class="home-panel" role="tabpanel" aria-labelledby="tab-game">
+              <div class="hero">
+                <div class="hero-stars" aria-hidden="true"></div>
+                <div class="logo-mark" aria-hidden="true"><span>CD</span></div>
+                <h1>Color Dots</h1>
+                <p class="tagline">
+                  Connect, think, and glow. Match pairs of colored dots to fill the grid — lines can’t cross. Every move lights
+                  up the board and your brain.
+                </p>
+              </div>
+              <div class="btn-row">
+                <button type="button" class="btn" id="btn-play">Play</button>
+                <button type="button" class="btn secondary" id="btn-levels">Levels</button>
+              </div>
+              <div class="info-card">
+                <h2>How to play</h2>
+                <ul>
+                  <li>Connect matching dots of the same color.</li>
+                  <li>When every pair is linked, the level clears — cover all squares for a perfect fill.</li>
+                  <li>Lines cannot overlap — plan your path carefully.</li>
+                </ul>
+              </div>
+              <div class="features">
+                <div class="feature-pill">Hundreds of levels to master</div>
+                <div class="feature-pill">Progressive difficulty</div>
+                <div class="feature-pill">Hints when you’re stuck</div>
+                <div class="feature-pill">Smooth neon visuals</div>
+              </div>
+              <div class="footer-banner">
+                <strong>Light up the grid</strong>
+                <span>Relax at home or train logic on the go — endless satisfaction.</span>
+              </div>
+            </div>
+
+            <div id="home-panel-daily" class="home-panel home-panel--daily" role="tabpanel" aria-labelledby="tab-daily" hidden>
+              <header class="daily-head">
+                <h2 class="daily-title">Daily</h2>
+                <p class="daily-lead">2026 · 3 puzzles per day · tap a date</p>
+              </header>
+              <div class="daily-year">2026</div>
+              <div id="daily-month-strip" class="daily-month-strip" role="tablist" aria-label="Month"></div>
+              <div class="daily-month-nav">
+                <button type="button" class="daily-nav" id="daily-prev-month" aria-label="Previous month">‹</button>
+                <div class="daily-month-label" id="daily-month-label">January</div>
+                <button type="button" class="daily-nav" id="daily-next-month" aria-label="Next month">›</button>
+              </div>
+              <div class="daily-weekdays" aria-hidden="true">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+              <div id="daily-calendar" class="daily-calendar"></div>
+              <p class="daily-legend"><span class="daily-legend-dot"></span> ring = progress · ★ = all 3 done</p>
+            </div>
+          </section>
+
+          <!-- Level select -->
+          <section id="screen-levels" class="screen">
+            <div class="levels-head">
+              <button type="button" class="icon-btn" id="btn-levels-back" aria-label="Back">‹</button>
+              <h2>Levels</h2>
+              <span style="width: 44px"></span>
+            </div>
+            <div id="level-grid" class="level-grid"></div>
+          </section>
+
+          <!-- Game -->
+          <section id="screen-game" class="screen">
+            <div class="game-top">
+              <button type="button" class="icon-btn" id="btn-game-back" aria-label="Back">‹</button>
+              <h2 id="game-title">LEVEL 1</h2>
+              <button type="button" class="icon-btn" id="btn-game-settings" aria-label="Settings">⚙</button>
+            </div>
+            <div class="stats-bar">
+              <span>Moves: <b id="stat-moves">0</b></span>
+              <span>Lines: <b id="stat-lines">0/0</b></span>
+              <span>Fill: <b id="stat-fill">0%</b></span>
+            </div>
+            <div class="board-wrap">
+              <div id="board" class="board" role="application" aria-label="Puzzle grid">
+                <div class="board-stack" id="board-stack">
+                  <svg id="board-svg" class="board-svg" aria-hidden="true"></svg>
+                  <div id="board-cells" class="board-cells"></div>
+                </div>
+              </div>
+            </div>
+            <div class="controls">
+              <button type="button" class="ctrl" id="btn-restart">
+                <span class="ctrl-circle" aria-hidden="true">↻</span>
+                Restart
+              </button>
+              <button type="button" class="ctrl hint" id="btn-hint">
+                <span class="ctrl-circle" aria-hidden="true">💡<span class="badge" id="hint-badge">3</span></span>
+                Hint
+              </button>
+              <button type="button" class="ctrl" id="btn-undo">
+                <span class="ctrl-circle" aria-hidden="true">↶</span>
+                Undo
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="win-overlay" class="win-overlay" aria-hidden="true">
+      <canvas id="win-confetti" class="win-confetti" width="300" height="300" aria-hidden="true"></canvas>
+      <div class="win-panel" role="dialog" aria-labelledby="win-heading-3d" aria-describedby="win-meta">
+        <h2 class="win-heading" id="win-heading-3d">Level complete</h2>
+        <p class="win-moves-line" id="win-moves-line">
+          You completed the level in <b class="win-moves-num" id="win-moves-num">0</b> moves!
+        </p>
+        <p class="win-meta" id="win-meta"></p>
+        <div class="win-actions">
+          <button type="button" class="win-btn win-btn--primary" id="btn-next-level">
+            <span class="win-btn__icon" aria-hidden="true">▶</span>
+            <span id="win-next-label">Next level</span>
+          </button>
+          <button type="button" class="win-btn win-btn--ghost" id="btn-win-replay" aria-label="Replay level">
+            <span class="win-btn__icon win-btn__icon--svg" aria-hidden="true">
+              <svg class="win-replay-svg" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  fill="currentColor"
+                  d="M12 5V1L7 6l5 5V7c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5H5c0 3.87 3.13 7 7 7s7-3.13 7-7-3.13-7-7-7z"
+                />
+              </svg>
+            </span>
+            <span>Replay</span>
+          </button>
+          <button type="button" class="win-link-home" id="btn-win-home">Home</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/levels.data.js"></script>
+    <script src="js/app.js" defer></script>
+  </body>
+</html>
