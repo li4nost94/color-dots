@@ -15,21 +15,10 @@
 
   const DAILY_YEAR = 2026;
   const DAILY_SUBLEVELS = 3;
-  const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const MONTH_LONG = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+
+  function I() {
+    return window.COLOR_DOTS_I18N;
+  }
 
   /** @type {"campaign" | "daily"} */
   let gameMode = "campaign";
@@ -581,20 +570,50 @@
     el(id).classList.add("active");
   }
 
-  function switchHomeTab(which) {
-    const tabG = el("tab-game");
-    const tabD = el("tab-daily");
-    const panelG = el("home-panel-game");
+  function showHomeHub() {
+    const hub = el("home-hub");
     const panelD = el("home-panel-daily");
-    if (!tabG || !tabD || !panelG || !panelD) return;
-    const isGame = which === "game";
-    tabG.classList.toggle("home-tab--active", isGame);
-    tabG.setAttribute("aria-selected", isGame ? "true" : "false");
-    tabD.classList.toggle("home-tab--active", !isGame);
-    tabD.setAttribute("aria-selected", isGame ? "false" : "true");
-    panelG.hidden = !isGame;
-    panelD.hidden = isGame;
-    if (!isGame) buildDailyCalendar();
+    if (hub) hub.hidden = false;
+    if (panelD) panelD.hidden = true;
+  }
+
+  function showHomeDaily() {
+    const hub = el("home-hub");
+    const panelD = el("home-panel-daily");
+    if (hub) hub.hidden = true;
+    if (panelD) panelD.hidden = false;
+    buildDailyCalendar();
+  }
+
+  function openHomeMenu() {
+    const o = el("overlay-home-menu");
+    if (!o) return;
+    o.classList.add("sheet-overlay--open");
+    o.setAttribute("aria-hidden", "false");
+    I().applyDom();
+  }
+
+  function closeHomeMenu() {
+    const o = el("overlay-home-menu");
+    if (!o) return;
+    o.classList.remove("sheet-overlay--open");
+    o.setAttribute("aria-hidden", "true");
+  }
+
+  function openHowtoDialog() {
+    const o = el("overlay-howto");
+    if (!o) return;
+    closeHomeMenu();
+    o.classList.add("sheet-overlay--open");
+    o.setAttribute("aria-hidden", "false");
+    I().applyDom();
+  }
+
+  function closeHowtoDialog() {
+    const o = el("overlay-howto");
+    if (!o) return;
+    o.classList.remove("sheet-overlay--open");
+    o.setAttribute("aria-hidden", "true");
   }
 
   function buildMonthStripOnce() {
@@ -607,7 +626,7 @@
       b.type = "button";
       b.className = "daily-month-chip";
       b.dataset.month = String(mi);
-      b.textContent = MONTH_SHORT[mi - 1];
+      b.textContent = I().monthShort(mi);
       b.setAttribute("role", "tab");
       (function (m) {
         b.addEventListener("click", function () {
@@ -638,7 +657,7 @@
     const prev = el("daily-prev-month");
     const next = el("daily-next-month");
     if (!root) return;
-    if (label) label.textContent = MONTH_LONG[dailyViewMonth - 1];
+    if (label) label.textContent = I().monthLong(dailyViewMonth);
     if (prev) prev.disabled = dailyViewMonth <= 1;
     if (next) next.disabled = dailyViewMonth >= 12;
     updateMonthStripActive();
@@ -692,7 +711,14 @@
       btn.appendChild(inner);
       btn.setAttribute(
         "aria-label",
-        MONTH_LONG[m - 1] + " " + d + (isStar ? ", complete" : ", " + prog + " of " + DAILY_SUBLEVELS),
+        isStar
+          ? I().tr("daily_aria_done", { month: I().monthLong(m), day: d })
+          : I().tr("daily_aria_prog", {
+              month: I().monthLong(m),
+              day: d,
+              prog: prog,
+              total: DAILY_SUBLEVELS,
+            }),
       );
       (function (yy, mm, dd) {
         btn.addEventListener("click", function () {
@@ -738,7 +764,11 @@
     dailyContext = { y: y, m: m, d: d, sub: sub };
     gameBackTarget = "home-daily";
     applyLevelState(idx);
-    el("game-title").textContent = "Daily " + pad2(d) + "." + pad2(m) + " · " + (sub + 1) + "/3";
+    el("game-title").textContent = I().tr("game_title_daily", {
+      d: pad2(d),
+      m: pad2(m),
+      sub: sub + 1,
+    });
     showScreen("screen-game");
   }
 
@@ -773,7 +803,7 @@
     if (opts && opts.from === "home") gameBackTarget = "home-game";
     else if (opts && opts.from === "levels") gameBackTarget = "levels";
     applyLevelState(idx);
-    el("game-title").textContent = "LEVEL " + (idx + 1);
+    el("game-title").textContent = I().tr("game_title_level", { n: idx + 1 });
     showScreen("screen-game");
   }
 
@@ -1025,64 +1055,51 @@
     }
 
     const fp = fillPercent();
-    const statsLine =
-      "Moves " +
-      moves +
-      " · Lines " +
-      level.pairs.length +
-      "/" +
-      level.pairs.length +
-      " · Fill " +
-      fp +
-      "%";
-
-    function winMovesLineHtml(before, after) {
-      el("win-moves-line").innerHTML =
-        before + '<b class="win-moves-num" id="win-moves-num">' + moves + "</b>" + after;
-    }
+    const statsLine = I().tr("stats_line", {
+      moves: moves,
+      locked: lockedLines(),
+      total: level.pairs.length,
+      fp: fp,
+    });
 
     if (gameMode === "daily" && dailyContext) {
       const key = dailyDateKeyFull(dailyContext.y, dailyContext.m, dailyContext.d);
       const doneN = getDailyProgress(key);
       if (doneN < DAILY_SUBLEVELS) {
-        el("win-heading-3d").textContent = "Puzzle clear";
-        winMovesLineHtml("You cleared puzzle " + doneN + " in ", " moves!");
-        let meta =
-          "Next: puzzle " +
-          (doneN + 1) +
-          " of " +
-          DAILY_SUBLEVELS +
-          " · " +
-          statsLine;
-        if (fp < 100) meta += " · 100% fill optional.";
+        el("win-heading-3d").textContent = I().tr("win_puzzle_clear");
+        el("win-moves-line").innerHTML = I().formatWinMovesHtml("win_moves_partial", moves, { done: doneN });
+        let meta = I().tr("win_meta_next", {
+          next: doneN + 1,
+          total: DAILY_SUBLEVELS,
+          stats: statsLine,
+        });
+        if (fp < 100) meta += I().tr("win_opt_fill_optional");
         el("win-meta").textContent = meta;
-        el("win-next-label").textContent = "Next puzzle";
+        el("win-next-label").textContent = I().tr("win_next_puzzle");
         el("btn-next-level").dataset.winAction = "daily-next";
       } else {
-        el("win-heading-3d").textContent = "Day complete";
-        winMovesLineHtml("You finished the last puzzle in ", " moves!");
-        let meta =
-          pad2(dailyContext.d) +
-          "." +
-          pad2(dailyContext.m) +
-          " — all " +
-          DAILY_SUBLEVELS +
-          " cleared · " +
-          statsLine;
-        if (fp < 100) meta += " · Replay from the calendar anytime.";
+        el("win-heading-3d").textContent = I().tr("win_day_complete");
+        el("win-moves-line").innerHTML = I().formatWinMovesHtml("win_moves_last", moves);
+        let meta = I().tr("win_meta_day", {
+          d: pad2(dailyContext.d),
+          m: pad2(dailyContext.m),
+          total: DAILY_SUBLEVELS,
+          stats: statsLine,
+        });
+        if (fp < 100) meta += I().tr("win_opt_replay_cal");
         el("win-meta").textContent = meta;
-        el("win-next-label").textContent = "Calendar";
+        el("win-next-label").textContent = I().tr("win_calendar");
         el("btn-next-level").dataset.winAction = "daily-home";
       }
     } else {
       const hasNext = levelIndex + 1 < levels.length;
-      el("win-heading-3d").textContent = "Level complete";
-      winMovesLineHtml("You completed the level in ", " moves!");
+      el("win-heading-3d").textContent = I().tr("win_level_complete");
+      el("win-moves-line").innerHTML = I().formatWinMovesHtml("win_moves_campaign", moves);
       let meta = statsLine;
       if (level.name) meta = level.name + " · " + meta;
-      if (fp < 100) meta += " · Cover all cells for 100% fill.";
+      if (fp < 100) meta += I().tr("win_fill_hint");
       el("win-meta").textContent = meta;
-      el("win-next-label").textContent = hasNext ? "Next level" : "Choose level";
+      el("win-next-label").textContent = hasNext ? I().tr("win_next_level") : I().tr("win_choose_level");
       el("btn-next-level").dataset.winAction = hasNext ? "next" : "levels";
     }
 
@@ -1132,12 +1149,13 @@
         startDailyChallenge(dailyContext.y, dailyContext.m, dailyContext.d);
       } else if (action === "daily-home") {
         showScreen("screen-home");
-        switchHomeTab("daily");
+        showHomeDaily();
       } else if (action === "replay") {
         restartLevel();
       } else {
         showScreen("screen-home");
-        switchHomeTab(gameMode === "daily" ? "daily" : "game");
+        if (gameMode === "daily") showHomeDaily();
+        else showHomeHub();
       }
     }, 300);
   }
@@ -1187,36 +1205,94 @@
     }, 2200);
   }
 
+  function refreshAfterLocaleChange() {
+    const strip = el("daily-month-strip");
+    if (strip && strip.dataset.built === "1") {
+      strip.querySelectorAll(".daily-month-chip").forEach(function (btn) {
+        const mi = Number(btn.dataset.month);
+        if (mi >= 1 && mi <= 12) btn.textContent = I().monthShort(mi);
+      });
+    }
+    const ml = el("daily-month-label");
+    if (ml) ml.textContent = I().monthLong(dailyViewMonth);
+    const panelD = el("home-panel-daily");
+    if (panelD && !panelD.hidden && el("screen-home") && el("screen-home").classList.contains("active")) {
+      buildDailyCalendar();
+    }
+    const gameScr = el("screen-game");
+    if (gameScr && gameScr.classList.contains("active") && level) {
+      if (gameMode === "daily" && dailyContext) {
+        const dc = dailyContext;
+        el("game-title").textContent = I().tr("game_title_daily", {
+          d: pad2(dc.d),
+          m: pad2(dc.m),
+          sub: dc.sub + 1,
+        });
+      } else {
+        el("game-title").textContent = I().tr("game_title_level", { n: levelIndex + 1 });
+      }
+    }
+  }
+
   function wireUi() {
-    el("tab-game").addEventListener("click", function () {
-      switchHomeTab("game");
-    });
-    el("tab-daily").addEventListener("click", function () {
-      switchHomeTab("daily");
-    });
     el("btn-play").addEventListener("click", function () {
       startGame(0, { from: "home" });
     });
-    el("btn-levels").addEventListener("click", () => {
+    el("btn-home-daily").addEventListener("click", function () {
+      showHomeDaily();
+    });
+    el("btn-daily-back").addEventListener("click", function () {
+      showHomeHub();
+    });
+    el("btn-home-settings").addEventListener("click", function () {
+      openHomeMenu();
+    });
+    el("btn-home-menu-close").addEventListener("click", closeHomeMenu);
+    el("home-menu-backdrop").addEventListener("click", closeHomeMenu);
+    el("btn-menu-howto").addEventListener("click", function () {
+      openHowtoDialog();
+    });
+    el("btn-howto-close").addEventListener("click", closeHowtoDialog);
+    el("howto-backdrop").addEventListener("click", closeHowtoDialog);
+    el("btn-menu-levels").addEventListener("click", function () {
+      closeHomeMenu();
       buildLevelGrid();
       showScreen("screen-levels");
     });
-    el("btn-levels-back").addEventListener("click", () => showScreen("screen-home"));
+    document.querySelectorAll(".lang-option--sheet").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const lc = btn.getAttribute("data-locale");
+        if (lc) I().setLocale(lc);
+      });
+    });
+    el("btn-levels-back").addEventListener("click", function () {
+      showScreen("screen-home");
+      showHomeHub();
+    });
     el("btn-game-back").addEventListener("click", function () {
       if (gameMode === "daily" || gameBackTarget === "home-daily") {
         showScreen("screen-home");
-        switchHomeTab("daily");
-        buildDailyCalendar();
+        showHomeDaily();
       } else if (gameBackTarget === "home-game") {
         showScreen("screen-home");
-        switchHomeTab("game");
+        showHomeHub();
       } else {
         showScreen("screen-levels");
       }
     });
     el("btn-game-settings").addEventListener("click", function () {
-      showScreen("screen-home");
-      switchHomeTab(gameMode === "daily" ? "daily" : "game");
+      showScreen("screen-settings");
+    });
+    el("btn-settings-back").addEventListener("click", function () {
+      showScreen("screen-game");
+    });
+    ["lang-en", "lang-ru", "lang-es"].forEach(function (id) {
+      const btn = el(id);
+      if (!btn) return;
+      btn.addEventListener("click", function () {
+        const lc = btn.getAttribute("data-locale");
+        if (lc) I().setLocale(lc);
+      });
     });
     const prevM = el("daily-prev-month");
     const nextM = el("daily-next-month");
@@ -1275,16 +1351,19 @@
     loadLevels();
     if (!levels.length) {
       el("btn-play").disabled = true;
-      el("btn-levels").disabled = true;
+      const ml = el("btn-menu-levels");
+      if (ml) ml.disabled = true;
       return;
     }
     const n0 = new Date();
     if (n0.getFullYear() === DAILY_YEAR) dailyViewMonth = n0.getMonth() + 1;
     else dailyViewMonth = 1;
+    I().applyDom();
+    window.addEventListener("colorDotsLocaleChange", refreshAfterLocaleChange);
     wireUi();
     updateHintBadge();
     buildMonthStripOnce();
-    buildDailyCalendar();
+    showHomeHub();
   }
 
   document.addEventListener("DOMContentLoaded", init);

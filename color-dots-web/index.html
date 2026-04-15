@@ -14,74 +14,73 @@
         <div class="phone-inner">
           <!-- Home -->
           <section id="screen-home" class="screen active">
-            <nav class="home-tabs" role="tablist" aria-label="Main sections">
-              <button type="button" class="home-tab home-tab--active" role="tab" id="tab-game" aria-selected="true" aria-controls="home-panel-game">
-                Game
-              </button>
-              <button type="button" class="home-tab" role="tab" id="tab-daily" aria-selected="false" aria-controls="home-panel-daily">
-                Daily Challenge
-              </button>
-            </nav>
-
-            <div id="home-panel-game" class="home-panel" role="tabpanel" aria-labelledby="tab-game">
-              <div class="hero">
-                <div class="hero-stars" aria-hidden="true"></div>
-                <div class="logo-mark" aria-hidden="true"><span>CD</span></div>
-                <h1>Color Dots</h1>
-                <p class="tagline">
-                  Connect, think, and glow. Match pairs of colored dots to fill the grid — lines can’t cross. Every move lights
-                  up the board and your brain.
-                </p>
-              </div>
-              <div class="btn-row">
-                <button type="button" class="btn" id="btn-play">Play</button>
-                <button type="button" class="btn secondary" id="btn-levels">Levels</button>
-              </div>
-              <div class="info-card">
-                <h2>How to play</h2>
-                <ul>
-                  <li>Connect matching dots of the same color.</li>
-                  <li>When every pair is linked, the level clears — cover all squares for a perfect fill.</li>
-                  <li>Lines cannot overlap — plan your path carefully.</li>
-                </ul>
-              </div>
-              <div class="features">
-                <div class="feature-pill">Hundreds of levels to master</div>
-                <div class="feature-pill">Progressive difficulty</div>
-                <div class="feature-pill">Hints when you’re stuck</div>
-                <div class="feature-pill">Smooth neon visuals</div>
-              </div>
-              <div class="footer-banner">
-                <strong>Light up the grid</strong>
-                <span>Relax at home or train logic on the go — endless satisfaction.</span>
+            <div id="home-hub" class="home-hub">
+              <header class="home-header">
+                <div class="home-header-bokeh" aria-hidden="true"></div>
+                <div class="home-header-inner">
+                  <div class="home-header-side home-header-side--left">
+                    <div class="home-logo-chip" aria-hidden="true"><span>CD</span></div>
+                  </div>
+                  <div class="home-header-center">
+                    <h1 class="home-title" data-i18n="page_title">Color Dots</h1>
+                    <p class="home-subtitle" data-i18n="home_subtitle">Connect the colors. Fill the grid.</p>
+                  </div>
+                  <div class="home-header-side home-header-side--right">
+                    <button type="button" class="home-header-gear" id="btn-home-settings" data-i18n-aria="aria_settings" aria-label="Settings">
+                      <span aria-hidden="true">⚙</span>
+                    </button>
+                  </div>
+                </div>
+              </header>
+              <div class="home-body">
+                <button type="button" class="home-plaque" id="btn-play">
+                  <span class="home-plaque-icon home-plaque-icon--play" aria-hidden="true">▶</span>
+                  <span class="home-plaque-text">
+                    <span class="home-plaque-title" data-i18n="btn_play">Play</span>
+                    <span class="home-plaque-sub" data-i18n="home_plaque_play_hint">Levels & classic flow</span>
+                  </span>
+                  <span class="home-plaque-arrow" aria-hidden="true">›</span>
+                </button>
+                <button type="button" class="home-plaque home-plaque--daily" id="btn-home-daily">
+                  <span class="home-plaque-icon home-plaque-icon--daily" aria-hidden="true">📅</span>
+                  <span class="home-plaque-text">
+                    <span class="home-plaque-title" data-i18n="tab_daily">Daily Challenge</span>
+                    <span class="home-plaque-sub" data-i18n="home_plaque_daily_hint">2026 · 3 puzzles per day</span>
+                  </span>
+                  <span class="home-plaque-arrow" aria-hidden="true">›</span>
+                </button>
               </div>
             </div>
 
-            <div id="home-panel-daily" class="home-panel home-panel--daily" role="tabpanel" aria-labelledby="tab-daily" hidden>
-              <header class="daily-head">
-                <h2 class="daily-title">Daily</h2>
-                <p class="daily-lead">2026 · 3 puzzles per day · tap a date</p>
-              </header>
-              <div class="daily-year">2026</div>
+            <div id="home-panel-daily" class="home-panel home-panel--daily" hidden>
+              <div class="daily-topbar">
+                <button type="button" class="icon-btn" id="btn-daily-back" data-i18n-aria="aria_back" aria-label="Back">‹</button>
+                <header class="daily-head daily-head--inline">
+                  <h2 class="daily-title" data-i18n="daily_title">Daily</h2>
+                  <p class="daily-lead" data-i18n="daily_lead">2026 · 3 puzzles per day · tap a date</p>
+                </header>
+                <span class="daily-topbar-spacer" aria-hidden="true"></span>
+              </div>
+              <div class="daily-year" data-i18n="daily_year">2026</div>
               <div id="daily-month-strip" class="daily-month-strip" role="tablist" aria-label="Month"></div>
               <div class="daily-month-nav">
-                <button type="button" class="daily-nav" id="daily-prev-month" aria-label="Previous month">‹</button>
+                <button type="button" class="daily-nav" id="daily-prev-month" data-i18n-aria="aria_prev_month" aria-label="Previous month">‹</button>
                 <div class="daily-month-label" id="daily-month-label">January</div>
-                <button type="button" class="daily-nav" id="daily-next-month" aria-label="Next month">›</button>
+                <button type="button" class="daily-nav" id="daily-next-month" data-i18n-aria="aria_next_month" aria-label="Next month">›</button>
               </div>
               <div class="daily-weekdays" aria-hidden="true">
-                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                <span data-i18n="wd0">M</span><span data-i18n="wd1">T</span><span data-i18n="wd2">W</span><span data-i18n="wd3">T</span><span data-i18n="wd4">F</span><span data-i18n="wd5">S</span><span data-i18n="wd6">S</span>
               </div>
               <div id="daily-calendar" class="daily-calendar"></div>
-              <p class="daily-legend"><span class="daily-legend-dot"></span> ring = progress · ★ = all 3 done</p>
+              <p class="daily-legend"><span class="daily-legend-dot"></span> <span data-i18n="daily_legend_ring">ring = progress · ★ = all 3 done</span></p>
             </div>
           </section>
 
           <!-- Level select -->
           <section id="screen-levels" class="screen">
             <div class="levels-head">
-              <button type="button" class="icon-btn" id="btn-levels-back" aria-label="Back">‹</button>
-              <h2>Levels</h2>
+              <button type="button" class="icon-btn" id="btn-levels-back" data-i18n-aria="aria_back" aria-label="Back">‹</button>
+              <h2 data-i18n="levels_title">Levels</h2>
               <span style="width: 44px"></span>
             </div>
             <div id="level-grid" class="level-grid"></div>
@@ -90,17 +89,17 @@
           <!-- Game -->
           <section id="screen-game" class="screen">
             <div class="game-top">
-              <button type="button" class="icon-btn" id="btn-game-back" aria-label="Back">‹</button>
+              <button type="button" class="icon-btn" id="btn-game-back" data-i18n-aria="aria_back" aria-label="Back">‹</button>
               <h2 id="game-title">LEVEL 1</h2>
-              <button type="button" class="icon-btn" id="btn-game-settings" aria-label="Settings">⚙</button>
+              <button type="button" class="icon-btn" id="btn-game-settings" data-i18n-aria="aria_settings" aria-label="Settings">⚙</button>
             </div>
             <div class="stats-bar">
-              <span>Moves: <b id="stat-moves">0</b></span>
-              <span>Lines: <b id="stat-lines">0/0</b></span>
-              <span>Fill: <b id="stat-fill">0%</b></span>
+              <span><span data-i18n="label_moves">Moves</span>: <b id="stat-moves">0</b></span>
+              <span><span data-i18n="label_lines">Lines</span>: <b id="stat-lines">0/0</b></span>
+              <span><span data-i18n="label_fill">Fill</span>: <b id="stat-fill">0%</b></span>
             </div>
             <div class="board-wrap">
-              <div id="board" class="board" role="application" aria-label="Puzzle grid">
+              <div id="board" class="board" role="application" data-i18n-aria="puzzle_grid" aria-label="Puzzle grid">
                 <div class="board-stack" id="board-stack">
                   <svg id="board-svg" class="board-svg" aria-hidden="true"></svg>
                   <div id="board-cells" class="board-cells"></div>
@@ -110,18 +109,89 @@
             <div class="controls">
               <button type="button" class="ctrl" id="btn-restart">
                 <span class="ctrl-circle" aria-hidden="true">↻</span>
-                Restart
+                <span data-i18n="ctrl_restart">Restart</span>
               </button>
               <button type="button" class="ctrl hint" id="btn-hint">
                 <span class="ctrl-circle" aria-hidden="true">💡<span class="badge" id="hint-badge">3</span></span>
-                Hint
+                <span data-i18n="ctrl_hint">Hint</span>
               </button>
               <button type="button" class="ctrl" id="btn-undo">
                 <span class="ctrl-circle" aria-hidden="true">↶</span>
-                Undo
+                <span data-i18n="ctrl_undo">Undo</span>
               </button>
             </div>
           </section>
+
+          <section id="screen-settings" class="screen">
+            <div class="settings-head">
+              <button type="button" class="icon-btn" id="btn-settings-back" data-i18n-aria="aria_back" aria-label="Back">‹</button>
+              <h2 data-i18n="settings_title">Settings</h2>
+              <span class="settings-head-spacer" aria-hidden="true"></span>
+            </div>
+            <div class="settings-body">
+              <p class="settings-label" id="settings-language-heading" data-i18n="settings_language">Language</p>
+              <div class="lang-row" role="radiogroup" aria-labelledby="settings-language-heading">
+                <button type="button" class="lang-option" data-locale="en" id="lang-en" aria-pressed="false">
+                  <span class="lang-flag" aria-hidden="true">🇬🇧</span>
+                  <span class="lang-name" data-i18n="lang_en">English</span>
+                </button>
+                <button type="button" class="lang-option" data-locale="ru" id="lang-ru" aria-pressed="false">
+                  <span class="lang-flag" aria-hidden="true">🇷🇺</span>
+                  <span class="lang-name" data-i18n="lang_ru">Русский</span>
+                </button>
+                <button type="button" class="lang-option" data-locale="es" id="lang-es" aria-pressed="false">
+                  <span class="lang-flag" aria-hidden="true">🇪🇸</span>
+                  <span class="lang-name" data-i18n="lang_es">Español</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div id="overlay-home-menu" class="sheet-overlay" aria-hidden="true">
+            <button type="button" class="sheet-backdrop" id="home-menu-backdrop" tabindex="-1" aria-hidden="true"></button>
+            <div class="sheet-panel sheet-panel--menu" role="dialog" aria-modal="true" aria-labelledby="home-menu-title">
+              <div class="sheet-head">
+                <h3 class="sheet-title" id="home-menu-title" data-i18n="home_menu_title">Menu</h3>
+                <button type="button" class="sheet-close" id="btn-home-menu-close" data-i18n-aria="dialog_close" aria-label="Close">×</button>
+              </div>
+              <div class="sheet-body">
+                <p class="settings-label" id="home-menu-lang-label" data-i18n="settings_language">Language</p>
+                <div class="lang-row lang-row--compact" role="radiogroup" aria-labelledby="home-menu-lang-label">
+                  <button type="button" class="lang-option lang-option--sheet" data-locale="en" aria-pressed="false">
+                    <span class="lang-flag" aria-hidden="true">🇬🇧</span>
+                    <span class="lang-name" data-i18n="lang_en">English</span>
+                  </button>
+                  <button type="button" class="lang-option lang-option--sheet" data-locale="ru" aria-pressed="false">
+                    <span class="lang-flag" aria-hidden="true">🇷🇺</span>
+                    <span class="lang-name" data-i18n="lang_ru">Русский</span>
+                  </button>
+                  <button type="button" class="lang-option lang-option--sheet" data-locale="es" aria-pressed="false">
+                    <span class="lang-flag" aria-hidden="true">🇪🇸</span>
+                    <span class="lang-name" data-i18n="lang_es">Español</span>
+                  </button>
+                </div>
+                <button type="button" class="sheet-action" id="btn-menu-howto" data-i18n="howto_title">How to play</button>
+                <button type="button" class="sheet-action sheet-action--secondary" id="btn-menu-levels" data-i18n="btn_levels">Levels</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="overlay-howto" class="sheet-overlay" aria-hidden="true">
+            <button type="button" class="sheet-backdrop" id="howto-backdrop" tabindex="-1" aria-hidden="true"></button>
+            <div class="sheet-panel sheet-panel--howto" role="dialog" aria-modal="true" aria-labelledby="howto-dialog-title">
+              <div class="sheet-head">
+                <h3 class="sheet-title" id="howto-dialog-title" data-i18n="howto_title">How to play</h3>
+                <button type="button" class="sheet-close" id="btn-howto-close" data-i18n-aria="dialog_close" aria-label="Close">×</button>
+              </div>
+              <div class="sheet-body sheet-body--howto">
+                <ul class="howto-list">
+                  <li data-i18n="howto_li1">Connect matching dots of the same color.</li>
+                  <li data-i18n="howto_li2">When every pair is linked, the level clears — cover all squares for a perfect fill.</li>
+                  <li data-i18n="howto_li3">Lines cannot overlap — plan your path carefully.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -139,7 +209,7 @@
             <span class="win-btn__icon" aria-hidden="true">▶</span>
             <span id="win-next-label">Next level</span>
           </button>
-          <button type="button" class="win-btn win-btn--ghost" id="btn-win-replay" aria-label="Replay level">
+          <button type="button" class="win-btn win-btn--ghost" id="btn-win-replay" data-i18n-aria="aria_replay" aria-label="Replay level">
             <span class="win-btn__icon win-btn__icon--svg" aria-hidden="true">
               <svg class="win-replay-svg" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -148,13 +218,14 @@
                 />
               </svg>
             </span>
-            <span>Replay</span>
+            <span data-i18n="win_replay">Replay</span>
           </button>
-          <button type="button" class="win-link-home" id="btn-win-home">Home</button>
+          <button type="button" class="win-link-home" id="btn-win-home" data-i18n="win_home">Home</button>
         </div>
       </div>
     </div>
 
+    <script src="js/i18n.js"></script>
     <script src="js/levels.data.js"></script>
     <script src="js/app.js" defer></script>
   </body>
